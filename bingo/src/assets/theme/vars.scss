@@ -1,0 +1,51 @@
+:root{
+    --navbar-height:70px;
+
+
+    --color-primary: rgb(128, 109, 253);
+    --color-primary-600: rgb(102, 53, 242);
+    --color-secondary: rgb(132, 182, 244);
+    --color-light: rgb(255, 255, 255);
+    --color-danger : rgb(185,28,28);
+    --color-danger-600 : rgb(155, 11, 11);
+    --color-pastel-red: rgb(244, 85, 114);
+    --color-pastel-red-rgb: 244, 85, 114;
+    --color-success : rgb(5, 150, 105);
+    --color-pastel-green: rgb(66 171 73);
+    --color-gray-300: rgb(110, 110, 110);
+    --color-gray-400: rgb(85 85 85);
+    --color-gray-700: rgb(68, 68, 68);
+    --color-gray-800: rgb(35, 44, 65);
+    --color-gray-900 : rgb(13, 19, 36);
+    --color-blue: rgb(0, 69, 154);
+    --color-body: rgb(245 247 250);
+    
+    --color-primary-rgb : 131, 111, 253;
+    --color-secondary-rgb: 132, 182, 244;
+    --color-light-rgb : 255, 255, 255;
+    --color-gray-300-rgb : 110, 110, 110;
+    --color-gray-400-rgb: 85, 85, 85;
+    --color-gray-900-rgb : 13, 19, 36;
+    --color-body-rgb: 245, 247, 250;
+    
+    --width-btn-icon: 40px;
+    --height-btn-icon: 40px;
+
+    --radius-1: 6px;
+    --p-1: 0.25rem;
+    --p-2: 0.5rem;
+    --p-3: 0.75rem;
+    --p-4: 1rem;
+    --p-5: 1.25rem;
+    --p-6: 1.50rem;
+    --p-7: 1.75rem;
+    --p-8: 2rem;
+    --px-1: 0.5rem;
+    --px-2:1rem;
+    --px-3: 1.5rem;
+    --px-4: 2rem;
+    --py-1: 0.5rem;
+    --py-2: 1rem;
+    --py-3: 1.5rem;
+    --py-4: 2rem;
+}

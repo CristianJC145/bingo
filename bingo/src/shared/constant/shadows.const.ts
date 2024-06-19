@@ -1,0 +1,1 @@
+export type ShadowsConstant = 'sm' | 'md' | 'lg'
