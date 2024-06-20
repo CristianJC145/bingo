@@ -1,6 +1,7 @@
 // src/pages/HomePage.tsx
 import React, { useState, useEffect } from 'react';
 import { saveBingoCard, getBingoCards, getLastBingoCardId, setLastBingoCardId } from './services/bingo.service';
+import ExportToExcel from '../../shared/components/ExportToExcel';
 
 const HomePage: React.FC = () => {
   const [bingoCards, setBingoCards] = useState<number[][][]>([]);
@@ -61,6 +62,7 @@ const HomePage: React.FC = () => {
       <h1>Bingo Game</h1>
       <input type="number" value={numCards} onChange={(e) => setNumCards(parseInt(e.target.value, 10))} />
       <button onClick={generateBingoCards}>Generate Bingo Cards</button>
+      <ExportToExcel />
     </div>
   );
 };

@@ -1,8 +1,13 @@
+// src/components/ExportToExcel.tsx
 import React, { useState } from 'react';
 import AppButton from './Buttons/AppButton';
-import { getBingoCards } from '../services/indexedDBService';
+import { getBingoCards } from '../../modules/bingoCardGenerator/services/bingo.service';
 import { Workbook } from 'exceljs';
-import { BingoCard } from '../utils/bingoCardGenerator';
+import { saveAs } from 'file-saver';
+interface BingoCard {
+  id: number;
+  card: number[][];
+}
 
 const ExportToExcel: React.FC = () => {
   const [_exporting, setExporting] = useState(false);
@@ -25,17 +30,10 @@ const ExportToExcel: React.FC = () => {
         ]);
       });
 
-      const blob = await workbook.xlsx.writeBuffer();
-      const blobUrl = URL.createObjectURL(new Blob([blob]));
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
 
-      const a = document.createElement('a');
-      a.href = blobUrl;
-      a.download = 'bingoCards.xlsx';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-
-      URL.revokeObjectURL(blobUrl);
+      saveAs(blob, 'bingoCards.xlsx');
     } catch (error) {
       console.error('Error exporting to Excel:', error);
     } finally {
