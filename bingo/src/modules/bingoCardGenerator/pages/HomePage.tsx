@@ -1,7 +1,7 @@
 // src/pages/HomePage.tsx
 import React, { useState, useEffect } from 'react';
-import { saveBingoCard, getBingoCards, getLastBingoCardId, setLastBingoCardId } from './services/bingo.service';
-import ExportToExcel from '../../shared/components/ExportToExcel';
+import { saveBingoCard, getBingoCards, getLastBingoCardId, setLastBingoCardId } from '../services/bingo.service';
+import ExportToExcel from '../../../shared/components/ExportToExcel';
 
 const HomePage: React.FC = () => {
   const [bingoCards, setBingoCards] = useState<number[][][]>([]);

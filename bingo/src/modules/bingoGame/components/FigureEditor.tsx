@@ -1,13 +1,38 @@
-import React, { useState } from 'react';
+// src/modules/BingoGame/FigureEditor.tsx
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
+import AppDataTable from '../../../shared/components/DataTable/AppDataTable';
 
 interface FigureEditorProps {
   onSave: (figure: { name: string, pattern: boolean[][] }) => void;
+  figure?: { id?: number, name: string, pattern: boolean[][] } | null;
 }
 
-const FigureEditor: React.FC<FigureEditorProps> = ({ onSave }) => {
+const FigureEditor: React.FC<FigureEditorProps> = ({ onSave, figure }) => {
   const [name, setName] = useState('');
   const [pattern, setPattern] = useState<boolean[][]>(Array(5).fill(Array(5).fill(false)));
+  const columns = [
+    {
+      Header: "Stock",
+      accessor: "",
+      HeaderClassName: "text-center",
+      columnClassName: "text-center",
+    },
+  ]
+
+  const params = {
+    id: 1,
+  };
+
+  useEffect(() => {
+    if (figure) {
+      setName(figure.name);
+      setPattern(figure.pattern);
+    } else {
+      setName('');
+      setPattern(Array(5).fill(Array(5).fill(false)));
+    }
+  }, [figure]);
 
   const handlePatternChange = (rowIndex: number, colIndex: number) => {
     const newPattern = pattern.map((row, rIdx) => 
@@ -28,7 +53,6 @@ const FigureEditor: React.FC<FigureEditorProps> = ({ onSave }) => {
 
   return (
     <FigureEditorStyle>
-
       <div className="figure-editor">
         <input 
           type="text" 
@@ -36,16 +60,22 @@ const FigureEditor: React.FC<FigureEditorProps> = ({ onSave }) => {
           onChange={(e) => setName(e.target.value)} 
           placeholder="Figure Name" 
         />
+        <AppDataTable
+          columns={columns}
+          params={params}
+          service={"sdfsd"}
+        >
+        </AppDataTable>
         <div className="pattern-grid">
           {pattern.map((row, rowIndex) => (
             <div key={rowIndex} className="pattern-row">
               {row.map((cell, colIndex) => (
                 <span 
                   key={colIndex} 
-                  className={cell ? 'filled' : ''} 
+                  className={cell ? 'cell filled' : 'cell'} 
                   onClick={() => handlePatternChange(rowIndex, colIndex)}
                 >
-                  ⬛
+                -
                 </span>
               ))}
             </div>
@@ -60,51 +90,23 @@ const FigureEditor: React.FC<FigureEditorProps> = ({ onSave }) => {
 export default FigureEditor;
 
 const FigureEditorStyle = styled.div`
-  .figure-editor {
-    margin: 20px 0;
-  }
-
   .pattern-grid {
-    display: grid;
-    gap: 5px;
-  }
 
+  }
   .pattern-row {
-    display: flex;
-  }
 
-  .pattern-row span {
-    width: 30px;
-    height: 30px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    border: 1px solid #ccc;
-    cursor: pointer;
   }
-
-  .pattern-row span.filled {
-    background-color: #000;
-    color: #fff;
+  .cell {
+    background-color: var(--color-primary);
+    color: var(--color-primary);
+    border-radius: 8px;
+    display: inline-block;
+    width: 50px;
+    height: 50px;
+    margin: 0.2rem; 
   }
-
-  .figure-list {
-    margin: 20px 0;
+  .cell.filled {
+    background-color: var(--color-pastel-green);
+    color: var(--color-pastel-green);
   }
-
-  .figure-item {
-    margin-bottom: 20px;
-  }
-
-  .figure-pattern {
-    display: grid;
-    grid-template-columns: repeat(5, 30px);
-    gap: 5px;
-  }
-
-  .figure-row {
-    display: flex;
-  }
-
 `
-

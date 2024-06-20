@@ -161,6 +161,7 @@ const AppButtonStyles = styled.div`
   .vs-btn--primary {
     color: #ffffff;
     background-color: var(--color-primary);
+    cursor: pointer;  
   }
 
   .vs-btn--white {

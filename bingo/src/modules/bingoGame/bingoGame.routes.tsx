@@ -1,11 +1,13 @@
 import { Route, Routes } from "react-router-dom";
-import BingoGame from "./components/BingoGame";
-
+import BingoFiguresPage from "./pages/bingoFiguresPage";
+import BingoLayout from "../../shared/layout/BingoLayout";
 const BingoGameRoutes: React.FC = () => {
     return (
-        <Routes>
-            <Route path="/panel/*" element={<BingoGame />}></Route>
-        </Routes>
+        <BingoLayout namePage={"/"} routePage={""}>
+            <Routes>
+                <Route path="/figures/*" element={<BingoFiguresPage />}></Route>
+            </Routes>
+        </BingoLayout>
     )
 }
 export default BingoGameRoutes;

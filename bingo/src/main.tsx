@@ -4,6 +4,7 @@ import App from './App.tsx'
 import './index.css'
 import './assets/theme/index.scss'
 import '../src/shared/plugins/fortawesome.plugin'
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
