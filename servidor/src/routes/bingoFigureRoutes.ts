@@ -7,7 +7,7 @@ const bingoFigureRouter = Router();
 const basePathApi = '/api/figures';
 
 bingoFigureRouter.get(`${basePathApi}/`, getFigures);
-bingoFigureRouter.post(`${basePathApi}/`, addFigure);
+bingoFigureRouter.post(`${basePathApi}/figure`, addFigure);
 bingoFigureRouter.put(`${basePathApi}/:id`, updateFigure);
 bingoFigureRouter.delete(`${basePathApi}/:id`, deleteFigure);
 

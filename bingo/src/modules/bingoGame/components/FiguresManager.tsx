@@ -1,70 +1,124 @@
-// src/modules/BingoGame/FigureManager.tsx
 import React, { useState, useEffect } from 'react';
-import { getFigures, addFigure, updateFigure, deleteFigure } from '../services/bingoFigure.service';
+import { deleteFigure } from '../services/bingoFigure.service';
+import { GetAllFiguresService } from '../services/getAllFigures.service';
+import AppModal from '../../../shared/components/AppModal';
 import FigureEditor from './FigureEditor';
+import styled from 'styled-components';
+import AppButton from '../../../shared/components/Buttons/AppButton';
+import AppDataTable from '../../../shared/components/DataTable/AppDataTable';
+
+const getAllFiguresService = new GetAllFiguresService();
 
 interface Figure {
-    id: number;
-    name: string;
-    pattern: boolean[][];
+  id: number;
+  name: string;
+  pattern: boolean[][];
 }
 
 const FigureManager: React.FC = () => {
-    const [figures, setFigures] = useState<Figure[]>([]);
-    const [editingFigure, setEditingFigure] = useState<Figure | null>(null);
-
-    useEffect(() => {
-        const fetchFigures = async () => {
-            const data = await getFigures();
-            setFigures(data);
-        };
-        fetchFigures();
-    }, []);
-
-    const handleSaveFigure = async (figure: { name: string, pattern: boolean[][] }) => {
-        if (editingFigure) {
-            const updatedFigure = await updateFigure(editingFigure.id, figure);
-            setFigures(figures.map(f => f.id === editingFigure.id ? updatedFigure : f));
-            setEditingFigure(null);
-        } else {
-            const newFigure = await addFigure(figure);
-            setFigures([...figures, newFigure]);
-        }
-    };
-
-    const handleEditFigure = (figure: Figure) => {
-        setEditingFigure(figure);
-    };
-
-    const handleDeleteFigure = async (id: number) => {
-        await deleteFigure(id);
-        setFigures(figures.filter(f => f.id !== id));
-    };
-
-    return (
+  const [figures, setFigures] = useState<Figure[]>([]);
+  const [editingFigureId, setEditingFigureId] = useState<number | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const columns = [
+    {
+      Header: 'Name',
+      accessor: 'name',
+      HeaderClassName: 'header-class',
+      columnClassName: 'column-class',
+    },
+    {
+      Header: 'Pattern',
+      accessor: 'pattern',
+      HeaderClassName: 'header-class',
+      columnClassName: 'column-class',
+      Cell: ({ value }: { value: string }) => (
         <div>
-            <h2>Manage Bingo Figures</h2>
-            <FigureEditor onSave={handleSaveFigure} figure={editingFigure} />
-            <div className="figure-list">
-                {figures.map((figure) => (
-                    <div key={figure.id} className="figure-item">
-                        <h3>{figure.name}</h3>
-                        <div className="figure-pattern">
-                            {figure.pattern.map((row, rowIndex) => (
-                                <div key={rowIndex} className="figure-row">
-                                    {row.map((cell, cellIndex) => (
-                                        <span key={cellIndex} className={cell ? 'cell filled' : 'cell'}>⬛</span>
-                                    ))}
-                                </div>
-                            ))}
-                        </div>
-                        <button onClick={() => handleEditFigure(figure)}>Edit</button>
-                        <button onClick={() => handleDeleteFigure(figure.id)}>Delete</button>
-                    </div>
-                ))}
-            </div>
+          {JSON.parse(value).flat().map((cell: boolean, index: number) => (
+            <span key={index}>{cell ? '1' : '0'}</span>
+          ))}
         </div>
-    );
+      ),
+    },
+    {
+      Header: 'Actions',
+      HeaderClassName: 'header-class',
+      columnClassName: 'column-class',
+      Cell: ({ value }: { value: any }) => (
+        <div>
+          <button onClick={() => handleEdit(value.id)}>Edit</button>
+          <button onClick={() => handleDeleteFigure(value.id)}>Delete</button>
+        </div>
+      ),
+    },
+  ];
+
+  // useEffect(() => {
+  //   const fetchFigures = async () => {
+  //     const data = await getAllFiguresService.run();
+  //     setFigures(data);
+  //   };
+  //   fetchFigures();
+  // }, []);
+
+  const handleOpenModal = (id?: number) => {
+    if (id) setEditingFigureId(id);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setEditingFigureId(null);
+    setIsModalOpen(false);
+  };
+
+  const handleSaveFigure = async () => {
+    const data = await getAllFiguresService.run();
+    setFigures(data);
+  };
+  const handleEdit = (id: number) => {
+    // Handle edit logic
+  };
+
+  const handleDeleteFigure = async (id: number) => {
+    await deleteFigure(id);
+    setFigures(figures.filter(f => f.id !== id));
+  };
+
+  return (
+    <FigureManagerStyle>
+      <h4 className='fw-bold'>Administrar Figuras</h4>
+      <AppButton className='figure-add' onClick={() => handleOpenModal()}>Añadir Figura</AppButton>
+      <AppDataTable columns={columns} service={getAllFiguresService} />
+      <div className="figure-list">
+      </div>
+      <AppModal title='Agregar Figura' isOpen={isModalOpen} onClose={handleCloseModal}>
+          <FigureEditor id={editingFigureId!} onClose={handleCloseModal} onSave={handleSaveFigure} />
+      </AppModal>
+    </FigureManagerStyle>
+  );
 };
 
 export default FigureManager;
+
+
+const FigureManagerStyle = styled.div`
+  .figure-add {
+    width: 200px;
+  }
+  .cell {
+    background-color: var(--color-primary);
+    color: var(--color-primary);
+    border-radius: 8px;
+    display: inline-block;
+    width: 60px;
+    height: 50px;
+    margin: 0.2rem; 
+    cursor: pointer;
+  }
+  .cell.filled {
+    background-color: var(--color-pastel-green);
+    color: var(--color-pastel-green);
+  }
+  .cell:hover {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  }
+`

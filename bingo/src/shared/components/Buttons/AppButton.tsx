@@ -195,7 +195,10 @@ const AppButtonStyles = styled.div`
     color: var(--color-light);
     background-color: rgba(var(--color-light-rgb), 0.15);
   }
-
+  .vs-btn--transparent {
+    color: var(--color-gray-900);
+    background-color: transparent;
+  }
   .vs-btn--primary:hover {
     background-color: var(--color-primary-600);
     color: #fff;

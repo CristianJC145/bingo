@@ -1,7 +1,7 @@
+// src/DataTable/AppDataTable.tsx
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import AppButton from "../Buttons/AppButton";
-import { services } from "../../constant/services";
 
 interface Column {
   Header: string;
@@ -37,8 +37,8 @@ const AppDataTable: React.FC<AppDataTableProps> = ({
   const pageSize = 10;
 
   const [search, setSearch] = useState("");
-  const firstRecord = data.length === 0 ? 0 : pageIndex * pageSize + 1;
-  const lastRecord = data.length === 0 ? 0 : firstRecord - 1 + data.length;
+  const firstRecord = data?.length === 0 ? 0 : pageIndex * pageSize + 1;
+  const lastRecord = data?.length === 0 ? 0 : firstRecord - 1 + data?.length;
 
   const totalPages = Math.ceil(pagination.total / pagination.perPage);
   const pages = Array.from({ length: totalPages }, (_, index) => index + 1);
@@ -52,22 +52,13 @@ const AppDataTable: React.FC<AppDataTableProps> = ({
         perPage: pagination.perPage,
         search,
       });
+      console.log("data: ", result)
 
       const { data, page, perPage, total } = result;
-      let products = data;
-      products.map((product: any) => {
-        product.images = product.images
-          .split(",")
-          .map((image: string) => `${services.api_url}/${image}`);
-
-        return {
-          ...products,
-        };
-      });
       setData(data);
       setPagination((prevPagination) => ({
         ...prevPagination,
-        total: result.total,
+        total: total,
       }));
     } catch (error) {
       console.error("Error al obtener datos:", error);
@@ -143,7 +134,7 @@ const AppDataTable: React.FC<AppDataTableProps> = ({
               ))}
             </tr>
           </thead>
-          {data.length === 0 ? (
+          {data?.length === 0 ? (
             <tbody>
               <tr>
                 <td colSpan={6}>
@@ -230,6 +221,7 @@ const AppDataTable: React.FC<AppDataTableProps> = ({
     </AppDataTableStyle>
   );
 };
+
 export default AppDataTable;
 
 const AppDataTableStyle = styled.div`
@@ -261,3 +253,4 @@ const AppDataTableStyle = styled.div`
     outline: none;
   }
 `;
+

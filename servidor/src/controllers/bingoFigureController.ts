@@ -6,10 +6,17 @@ interface InsertResult extends ResultSetHeader {
     insertId: number;
 }
 
-export const getFigures = async (req: Request, res: Response) => {
+export const getFigures = async (_req: Request, res: Response) => {
     try {
         const [results] = await db.query('SELECT * FROM bingoFigures');
-        res.json(results);
+        const [total] = await db.query(`SELECT COUNT(*) AS total FROM bingoFigures`);
+        console.log(total);
+        const dataRespose = {
+            data: results,
+            total: 10,
+            perPage: 10
+        }
+        res.json(dataRespose);
     } catch (error) {
         res.status(500).json({ message: 'Error fetching figures' });
     }
