@@ -63,7 +63,7 @@ const FigureEditor: React.FC<FigureEditorProps> = ({ id, onClose, onSave }) => {
   return (
     <FigureEditorStyle>
       <div className="figure-editor">
-        <div className='form-group'></div>
+        <div className='form-group'>
           <label className='fw-bold mb-1' htmlFor="figure-name">Nombre Figura</label>
           <input
             type="text"
@@ -74,27 +74,29 @@ const FigureEditor: React.FC<FigureEditorProps> = ({ id, onClose, onSave }) => {
             id='figure-name'
           />
           {error && <p className="error-message">{error}</p>}
-        <div className='pattern-header'>
-          <h5>B</h5>
-          <h5>I</h5>
-          <h5>N</h5>
-          <h5>G</h5>
-          <h5>O</h5>
         </div>
-        <div className="pattern-grid">
-          {pattern.map((row, rowIndex) => (
-            <div key={rowIndex} className="pattern-row">
-              {row.map((cell, colIndex) => (
-                <span
-                  key={colIndex}
-                  className={cell ? 'cell filled' : 'cell'}
-                  onClick={() => handlePatternChange(rowIndex, colIndex)}
-                >
-                  -
-                </span>
-              ))}
-            </div>
-          ))}
+
+        <div className='side-table'>
+          <div className='pattern-header'>
+            <h5>B</h5>
+            <h5>I</h5>
+            <h5>N</h5>
+            <h5>G</h5>
+            <h5>O</h5>
+          </div>
+          <div className="pattern-grid">
+            {pattern.map((row, rowIndex) => (
+              <div key={rowIndex} className="pattern-row">
+                {row.map((cell, colIndex) => (
+                  <span
+                    key={colIndex}
+                    className={cell ? 'cell filled' : 'cell'}
+                    onClick={() => handlePatternChange(rowIndex, colIndex)}
+                  />
+                ))}
+              </div>
+            ))}
+          </div>
         </div>
         <div className='figure-action'>
           <AppButton variant="transparent" onClick={onClose}>Cancelar</AppButton>
@@ -109,31 +111,39 @@ export default FigureEditor;
 
 const FigureEditorStyle = styled.div`
   .pattern-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
     margin-bottom: 1rem;
+  }
+  .pattern-row {
+    display: flex;
+    justify-content: space-between;
+    gap: .7rem;
   }
   .pattern-header {
     display: flex;
     justify-content: space-between;
-    margin-top: 1.75rem;
+    margin-top: .5rem;
+    margin-bottom: .5rem;
+    color: var(--color-body);
   }
   .pattern-header h5 {
     width: 60px;
     text-align: center;
     font-size: 22px;
-    font-weight: 700;
     margin-bottom: 0;
   }
-  .pattern-row {
 
-  }
   .cell {
-    background-color: var(--color-primary);
+    background-color: var(--color-body);
     color: var(--color-primary);
     border-radius: 8px;
     display: inline-block;
-    width: 60px;
-    height: 55px;
-    margin: 0.3rem; 
+    width: 50px;
+    height: 50px;
+    margin: 0.2rem;
+    cursor: pointer;
   }
   .cell.filled {
     background-color: var(--color-pastel-green);
@@ -144,6 +154,7 @@ const FigureEditorStyle = styled.div`
     justify-content: flex-end;
     border-top: 1px solid rgba(var(--color-gray-300-rgb), .1);
     padding-top: 1rem;
+    margin-top: 1rem;
   }
   .error-message {
     color: red;

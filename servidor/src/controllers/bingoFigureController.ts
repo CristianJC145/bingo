@@ -10,7 +10,6 @@ export const getFigures = async (_req: Request, res: Response) => {
     try {
         const [results] = await db.query('SELECT * FROM bingoFigures');
         const [total] = await db.query(`SELECT COUNT(*) AS total FROM bingoFigures`);
-        console.log(total);
         const dataRespose = {
             data: results,
             total: 10,

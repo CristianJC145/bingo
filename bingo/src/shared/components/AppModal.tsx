@@ -47,7 +47,7 @@ const AppModalStyle = styled.div`
   }
   .modal-container {
     background: white;
-    max-width: 400px;
+    max-width: 410px;
     border-radius: 8px;
   }
   .modal-content {

@@ -19,12 +19,14 @@ interface AppDataTableProps {
   params?: {
     id: number;
   };
+  onRowClick?: (row: any) => void;
 }
 
 const AppDataTable: React.FC<AppDataTableProps> = ({
   columns,
   service,
   params,
+  onRowClick,
 }) => {
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -84,7 +86,7 @@ const AppDataTable: React.FC<AppDataTableProps> = ({
     <AppDataTableStyle>
       <div className="d-flex align-items-center justify-content-between gap-md-4">
         <section className="vs-section-search-bar px-0">
-          <div className="vs-search-bar py-0 shadow-sm col-12 col-sm-6 col-xl-3">
+          <div className="vs-search-bar py-0 shadow-sm col-12 col-sm-6">
             <input
               type="text"
               value={search}
@@ -145,7 +147,7 @@ const AppDataTable: React.FC<AppDataTableProps> = ({
           ) : (
             <tbody>
               {data.map((row, rowIndex) => (
-                <tr key={rowIndex}>
+                <tr key={rowIndex} onClick={() => onRowClick && onRowClick(row)}>
                   {columns.map((column, colIndex) => (
                     <td
                       key={colIndex}
