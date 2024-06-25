@@ -20,6 +20,7 @@ interface AppDataTableProps {
     id: number;
   };
   onRowClick?: (row: any) => void;
+  selectedRowId?: number | null;
 }
 
 const AppDataTable: React.FC<AppDataTableProps> = ({
@@ -27,8 +28,10 @@ const AppDataTable: React.FC<AppDataTableProps> = ({
   service,
   params,
   onRowClick,
+  selectedRowId,
 }) => {
   const [data, setData] = useState<any[]>([]);
+  console.log(" clci",onRowClick);
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState({
     page: 1,
@@ -147,7 +150,7 @@ const AppDataTable: React.FC<AppDataTableProps> = ({
           ) : (
             <tbody>
               {data.map((row, rowIndex) => (
-                <tr key={rowIndex} onClick={() => onRowClick && onRowClick(row)}>
+                <tr className={`${selectedRowId === row.id ? 'selected' : ''}`} key={rowIndex} onClick={() => onRowClick && onRowClick(row)}>
                   {columns.map((column, colIndex) => (
                     <td
                       key={colIndex}

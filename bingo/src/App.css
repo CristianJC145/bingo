@@ -16,7 +16,6 @@
 }
 .vs-dataTable >:not(caption)>*>*  {
   padding: var(--p-4) var(--p-6);
-  background-color: #fff;
   color: var(--color-gray-700);
 }
 .vs-dataTable td {

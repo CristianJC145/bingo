@@ -47,8 +47,8 @@ const AppModalStyle = styled.div`
   }
   .modal-container {
     background: white;
-    max-width: 410px;
-    border-radius: 8px;
+    max-width: 450px;
+    border-radius: 16px;
   }
   .modal-content {
       position: relative;
@@ -77,10 +77,9 @@ const AppModalStyle = styled.div`
   .header-title {
     font-weight: 700;
     font-size: 16px;
-    text-align: center;
     width: 100%;
-    border-bottom: 1px solid rgba(var(--color-gray-300-rgb), .1);
-    padding: 1rem;
+    border-bottom: 1px solid rgba(var(--color-gray-300-rgb), .2);
+    padding: 1rem 2rem;
   }
 
 `

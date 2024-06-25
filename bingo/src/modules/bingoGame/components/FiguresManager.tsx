@@ -6,6 +6,7 @@ import FigureEditor from './FigureEditor';
 import styled from 'styled-components';
 import AppButton from '../../../shared/components/Buttons/AppButton';
 import AppDataTable from '../../../shared/components/DataTable/AppDataTable';
+import ConfirmAction from './ConfirmAction';
 
 const getAllFiguresService = new GetAllFiguresService();
 
@@ -20,6 +21,9 @@ const FigureManager: React.FC = () => {
   const [editingFigureId, setEditingFigureId] = useState<number | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedFigure, setSelectedFigure] = useState<any | null>(null);
+  const [selectedRowId, setSelectedRowId] = useState<number | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
   const positions = [
     'B1', 'B2', 'B3', 'B4', 'B5',
     'I1', 'I2', 'I3', 'I4', 'I5',
@@ -73,6 +77,9 @@ const FigureManager: React.FC = () => {
     setEditingFigureId(null);
     setIsModalOpen(false);
   };
+  const handleCloseWarning = () => {
+    setIsDeleteModalOpen(false);
+  }
 
   const handleSaveFigure = async () => {
     const data = await getAllFiguresService.run();
@@ -83,17 +90,20 @@ const FigureManager: React.FC = () => {
   };
 
   const handleDeleteFigure = async (id: number) => {
-    await deleteFigure(id);
-    setFigures(figures.filter(f => f.id !== id));
+    setIsDeleteModalOpen(true);
+    // await deleteFigure(id);
+    // setFigures(figures.filter(f => f.id !== id));
   };
   const handleRowClick = (figure: any) => {
     setSelectedFigure(figure);
+    setSelectedRowId(figure.id)
   };
   const fetchFigures = async () => {
     const result = await getAllFiguresService.run();
     setFigures(result.data);
     if (result.data.length > 0 ) {
       setSelectedFigure(result.data[0]);
+      setSelectedRowId(result.data[0].id);
     }
   }
   useEffect(()=> {
@@ -105,7 +115,7 @@ const FigureManager: React.FC = () => {
         <div className='left-side'>
           <h4 className='fw-bold'>Administrar Figuras</h4>
           <AppButton className='figure-add' onClick={() => handleOpenModal()}>Añadir Figura</AppButton>
-          <AppDataTable columns={columns} service={{ run: new GetAllFiguresService().run }} onRowClick={handleRowClick} />
+          <AppDataTable columns={columns} service={{ run: new GetAllFiguresService().run }} selectedRowId={selectedRowId} onRowClick={handleRowClick} />
         </div>
         <div className='rigth-side'>
           {selectedFigure && (
@@ -133,6 +143,10 @@ const FigureManager: React.FC = () => {
         </div>
         <AppModal title='Agregar Figura' isOpen={isModalOpen} onClose={handleCloseModal}>
             <FigureEditor id={editingFigureId!} onClose={handleCloseModal} onSave={handleSaveFigure} />
+        </AppModal>
+        
+        <AppModal title='¿Eliminar Figura?' isOpen={isDeleteModalOpen} onClose={handleCloseWarning}>
+          <ConfirmAction></ConfirmAction>
         </AppModal>
       </div>
     </FigureManagerStyle>
@@ -204,5 +218,13 @@ const FigureManagerStyle = styled.div`
   .btn-actions {
     display: flex;
     gap: 1rem;  
+  }
+  .selected {
+    background-color: rgba(var(--color-gray-300-rgb), .075);
+    box-shadow: 8px 3px 8px rgba(0, 0, 0 , 0.15);
+  }
+  .selected td {
+    border-bottom: none;
+    border-top: none;
   }
 `
