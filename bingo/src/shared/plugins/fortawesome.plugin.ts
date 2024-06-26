@@ -63,7 +63,8 @@ import {
     faCircleCheck,
     faGamepad,
     faVectorSquare,
-    faClone
+    faClone,
+    faTriangleExclamation,
 } from '@fortawesome/free-solid-svg-icons';
 
 library.add(
@@ -126,5 +127,6 @@ library.add(
     faCircleCheck,
     faGamepad,
     faVectorSquare,
-    faClone
+    faClone,
+    faTriangleExclamation
     );

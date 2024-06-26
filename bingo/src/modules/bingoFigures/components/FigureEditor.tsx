@@ -1,33 +1,39 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 
-import { updateFigure, getFigures } from '../services/bingoFigure.service';
+import { updateFigure } from '../services/bingoFigure.service';
 import AppButton from '../../../shared/components/Buttons/AppButton';
 import { CreateOrUpdateFigureService } from '../services/createOrUpdateFigure.service';
+import { toast } from 'react-toastify';
+import { GetAllFiguresService } from '../services/getAllFigures.service';
+import AppIcon from '../../../shared/components/AppIcon';
 
 const createOrUpdateFigureService = new CreateOrUpdateFigureService();
 
 interface FigureEditorProps {
   id?: number;
   onClose: () => void;
-  onSave: () => void;
+  onSave: () => void
 }
+
+const getAllFiguresService = new GetAllFiguresService()
 
 const FigureEditor: React.FC<FigureEditorProps> = ({ id, onClose, onSave }) => {
   const [name, setName] = useState('');
   const [pattern, setPattern] = useState<boolean[][]>(Array(5).fill(Array(5).fill(false)));
   const [error, setError] = useState('');
-  useEffect(() => {
-    const fetchFigure = async () => {
-      if (id) {
-        const figures = await getFigures();
-        const figure = figures.find((f: any) => f.id === id);
-        if (figure) {
-          setName(figure.name);
-          setPattern(JSON.parse(figure.pattern));
-        }
+
+  const fetchFigure = async () => {
+    if (id) {
+      const result = await getAllFiguresService.run();
+      const figure = result.data.find((f: any) => f.id === id);
+      if (figure) {
+        setName(figure.name);
+        setPattern(figure.pattern);
       }
-    };
+    }
+  };
+  useEffect(() => {
     fetchFigure();
   }, [id]);
 
@@ -50,10 +56,13 @@ const FigureEditor: React.FC<FigureEditorProps> = ({ id, onClose, onSave }) => {
       }
       if (id) {
         await updateFigure(id, { name, pattern });
+        toast.success(`¡Se ha actualizado la figura correctamente!`);
+        onSave()
       } else {
         await createOrUpdateFigureService.run(dataSend)
+        toast.success(`¡Se ha creado la figura ${name} correctamente!`);
+        onSave();
       }
-      onSave();
       onClose();
     } else {
       setError('El nombre es requerido');
@@ -69,8 +78,8 @@ const FigureEditor: React.FC<FigureEditorProps> = ({ id, onClose, onSave }) => {
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Figure Name"
-            className={error ? 'form-control mb-2 error' : 'form-control mb-2'}
+            placeholder="Nombre de Figura"
+            className={error ? 'form-control mb-2 error' : 'form-control mb-2 py-2'}
             id='figure-name'
           />
           {error && <p className="error-message">{error}</p>}
@@ -88,11 +97,17 @@ const FigureEditor: React.FC<FigureEditorProps> = ({ id, onClose, onSave }) => {
             {pattern.map((row, rowIndex) => (
               <div key={rowIndex} className="pattern-row">
                 {row.map((cell, colIndex) => (
-                  <span
+                  <div
                     key={colIndex}
-                    className={cell ? 'cell filled' : 'cell'}
+                    className={`${rowIndex === 2 && colIndex === 2 ? "free" : cell ?  "cell filled" : "cell"}`}
                     onClick={() => handlePatternChange(rowIndex, colIndex)}
-                  />
+                  >
+                    {rowIndex === 2 && colIndex === 2 ? (
+                      <span>FREE</span>
+                    ): cell ? (
+                      <AppIcon icon="star"></AppIcon>
+                    ): ("")}
+                  </div>
                 ))}
               </div>
             ))}
@@ -146,8 +161,10 @@ const FigureEditorStyle = styled.div`
     cursor: pointer;
   }
   .cell.filled {
-    background-color: var(--color-pastel-green);
-    color: var(--color-pastel-green);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-primary);
   }
   .figure-action {
     display: flex;

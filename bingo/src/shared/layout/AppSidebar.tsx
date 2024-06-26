@@ -38,11 +38,11 @@ const AppSidebar : React.FC<AppSidebarProps> = ({isOpen, onClose, onSmallSidebar
                         <span className="vs-logo--title">BINGO</span>
                     </a>
                     <AppButton className="vs-btn-closeSidebar" icon="fa-times" variant="dark" onClick={onClose} ariaLabel="Button Close Sidebar"></AppButton>
-                    <AppButton className="vs-btn-miniSidebar" icon={`${smallSidebar ? 'bars' : 'bars-staggered'}`} variant="dark" onClick={handleSmallSidebar} ariaLabel="Small Sidebar"></AppButton>
+                    <AppButton className="vs-btn-miniSidebar" icon={`${smallSidebar ? 'bars' : 'bars-staggered'}`} variant="white" onClick={handleSmallSidebar} ariaLabel="Small Sidebar"></AppButton>
                 </div>
                 <div className="vs-sidebar-content">
                     <AppLinkNavigation to="/game/panel" icon="gamepad" label="Juego" selected={selectedOption === '/game/panel'}></AppLinkNavigation>
-                    <AppLinkNavigation to="/game/figures" icon="vector-square" label="Figuras" selected={selectedOption === "/game/figures"}></AppLinkNavigation>
+                    <AppLinkNavigation to="/figures/administator" icon="vector-square" label="Figuras" selected={selectedOption === "/figures/administator"}></AppLinkNavigation>
                     <AppLinkNavigation to="/resources/generate" icon="clone" label="Generador"  selected={selectedOption === "/resources/generate"}></AppLinkNavigation>
                     <AppLinkNavigation to="/dashboard/finance" icon="sack-dollar" label="Financiero" selected={selectedOption === "/dashboard/finance"}></AppLinkNavigation>
                     <AppLinkNavigation to="/dashboard/sales" icon="tags" label="Ventas" selected={selectedOption === "/dashboard/sales"}></AppLinkNavigation>
@@ -62,7 +62,6 @@ const AppSidebarStyle = styled.div`
     z-index: 0;
     bottom: 0;
     top: 0;
-    background-color: #fff;
     transform: translateX(-17.125rem);
     transition: all .3s ease;
     border-radius: 16px;
@@ -70,6 +69,7 @@ const AppSidebarStyle = styled.div`
     margin-bottom: 1rem;
     margin-top: 1rem;
     margin-left: 1rem;
+    background-color: #222340;
 }
 .vs-sidebar.open {
     transform: translateX(0);
@@ -87,9 +87,8 @@ const AppSidebarStyle = styled.div`
     content: '';
     display: flex;
     position: absolute;
-    width: 80%;
-    margin-left: 10%;
-    border-bottom: 2px solid var(--color-body);
+    width: 100%;
+    border-bottom: 1px solid rgba(var(--color-body-rgb), .3);
     bottom: 0;
 }
 .vs-header--logo {
@@ -109,7 +108,7 @@ const AppSidebarStyle = styled.div`
 }
 .vs-logo--title {
     font-weight: bold;
-    color: var(--color-gray-700);
+    color: var(--color-body);
 }
 .vs-logo--img {
     width: 35px;
@@ -171,10 +170,6 @@ const AppSidebarStyle = styled.div`
     }
     .vs-sidebar.small-sidebar .vs-sidebar--header {
         justify-content: center;
-    }
-    .vs-sidebar.small-sidebar .vs-sidebar--header::after {
-        width: 60%;
-        margin-left: 0;
     }
     .vs-sidebar.small-sidebar .vs-header--logo {
         width: 0;

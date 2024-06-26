@@ -31,7 +31,6 @@ const AppDataTable: React.FC<AppDataTableProps> = ({
   selectedRowId,
 }) => {
   const [data, setData] = useState<any[]>([]);
-  console.log(" clci",onRowClick);
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState({
     page: 1,
@@ -57,8 +56,7 @@ const AppDataTable: React.FC<AppDataTableProps> = ({
         perPage: pagination.perPage,
         search,
       });
-      console.log("data: ", result)
-
+      
       const { data, page, perPage, total } = result;
       setData(data);
       setPagination((prevPagination) => ({

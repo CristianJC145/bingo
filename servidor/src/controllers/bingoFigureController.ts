@@ -22,7 +22,12 @@ export const getFigures = async (_req: Request, res: Response) => {
 };
 
 export const addFigure = async (req: Request, res: Response) => {
-    const { name, pattern } = req.body;
+    let { name, pattern } = req.body;
+
+    if (typeof pattern === 'string') {
+        pattern = JSON.parse(pattern);
+    }
+    pattern[2][2] = false;
     try {
         const [result] = await db.query<InsertResult>('INSERT INTO bingoFigures (name, pattern) VALUES (?, ?)', [name, JSON.stringify(pattern)]);
         res.status(201).json({ id: result.insertId, name, pattern });
@@ -33,7 +38,13 @@ export const addFigure = async (req: Request, res: Response) => {
 
 export const updateFigure = async (req: Request, res: Response) => {
     const { id } = req.params;
-    const { name, pattern } = req.body;
+    let { name, pattern } = req.body;
+    if (typeof pattern === 'string') {
+        pattern = JSON.parse(pattern);
+    }
+    
+    pattern[2][2] = false;
+
     try {
         await db.query('UPDATE bingoFigures SET name = ?, pattern = ? WHERE id = ?', [name, JSON.stringify(pattern), id]);
         res.status(200).json({ message: 'Figure updated' });

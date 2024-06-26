@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { deleteFigure } from '../services/bingoFigure.service';
 import { GetAllFiguresService } from '../services/getAllFigures.service';
 import AppModal from '../../../shared/components/AppModal';
 import FigureEditor from './FigureEditor';
@@ -7,6 +6,7 @@ import styled from 'styled-components';
 import AppButton from '../../../shared/components/Buttons/AppButton';
 import AppDataTable from '../../../shared/components/DataTable/AppDataTable';
 import ConfirmAction from './ConfirmAction';
+import AppIcon from '../../../shared/components/AppIcon';
 
 const getAllFiguresService = new GetAllFiguresService();
 
@@ -17,12 +17,13 @@ interface Figure {
 }
 
 const FigureManager: React.FC = () => {
-  const [figures, setFigures] = useState<Figure[]>([]);
   const [editingFigureId, setEditingFigureId] = useState<number | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedFigure, setSelectedFigure] = useState<any | null>(null);
   const [selectedRowId, setSelectedRowId] = useState<number | null>(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [figureDataDelete, setFigureDataDelete] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const positions = [
     'B1', 'B2', 'B3', 'B4', 'B5',
@@ -48,8 +49,10 @@ const FigureManager: React.FC = () => {
         const letter = position[0];
         const index = parseInt(position[1]) - 1;
         const columnIndex = ['B', 'I', 'N', 'G', 'O'].indexOf(letter);
-        console.log("columnIndex", columnIndex);
         const rowIndex = index;
+        if (letter === 'N' && rowIndex === 2 && columnIndex === 2) {
+          return <div>Free</div>;
+        }
         const values = pattern[rowIndex][columnIndex];
         return (
           <div>{values ? '1': '0'}</div>
@@ -62,13 +65,14 @@ const FigureManager: React.FC = () => {
       columnClassName: 'column-class',
       Cell: ({ value }: { value: any }) => (
         <div className='btn-actions'>
-          <AppButton icon="check-square" className="bg-transparent" variant='dark' onClick={() => handleEdit(value.id)}></AppButton>
-          <AppButton icon="fa-trash-alt" className="text-danger bg-transparent" onClick={() => handleDeleteFigure(value.id)}></AppButton>
+          <AppButton icon="check-square" className="bg-transparent" variant='dark' onClick={() => handleOpenModal(value.id)}></AppButton>
+          <AppButton icon="fa-trash-alt" className="text-danger bg-transparent" onClick={() => handleDeleteFigure(value)}></AppButton>
         </div>
       ),
     },
   ];
   const handleOpenModal = (id?: number) => {
+    console.log(id);
     if (id) setEditingFigureId(id);
     setIsModalOpen(true);
   };
@@ -81,18 +85,9 @@ const FigureManager: React.FC = () => {
     setIsDeleteModalOpen(false);
   }
 
-  const handleSaveFigure = async () => {
-    const data = await getAllFiguresService.run();
-    setFigures(data as any);
-  };
-  const handleEdit = (id: number) => {
-    // Handle edit logic
-  };
-
-  const handleDeleteFigure = async (id: number) => {
+  const handleDeleteFigure = async (data: any) => {
     setIsDeleteModalOpen(true);
-    // await deleteFigure(id);
-    // setFigures(figures.filter(f => f.id !== id));
+    setFigureDataDelete(data);
   };
   const handleRowClick = (figure: any) => {
     setSelectedFigure(figure);
@@ -100,15 +95,17 @@ const FigureManager: React.FC = () => {
   };
   const fetchFigures = async () => {
     const result = await getAllFiguresService.run();
-    setFigures(result.data);
     if (result.data.length > 0 ) {
       setSelectedFigure(result.data[0]);
       setSelectedRowId(result.data[0].id);
     }
   }
+  const handleLoading = () => {
+    setLoading(!loading);
+  }
   useEffect(()=> {
     fetchFigures();
-  }, []);
+  }, [loading]);
   return (
     <FigureManagerStyle>
       <div className='figure-manager'>
@@ -132,8 +129,14 @@ const FigureManager: React.FC = () => {
                   row.map((cell: boolean, cellIndex: number) => (
                     <div
                       key={`${rowIndex}-${cellIndex}`}
-                      className={`${cell ? "cell filled" : "cell"}`}
-                    />
+                      className={`${rowIndex === 2 && cellIndex === 2 ? "free" : cell ?  "cell filled" : "cell"}`}
+                    >
+                      {rowIndex === 2 && cellIndex === 2 ? (
+                        <span>FREE</span>
+                      ): cell ? (
+                        <AppIcon icon="star"></AppIcon>
+                      ):("")}
+                    </div>
                   ))
                 )}
               </div>
@@ -142,11 +145,11 @@ const FigureManager: React.FC = () => {
           )}
         </div>
         <AppModal title='Agregar Figura' isOpen={isModalOpen} onClose={handleCloseModal}>
-            <FigureEditor id={editingFigureId!} onClose={handleCloseModal} onSave={handleSaveFigure} />
+            <FigureEditor id={editingFigureId!} onClose={handleCloseModal} onSave={handleLoading}/>
         </AppModal>
         
         <AppModal title='¿Eliminar Figura?' isOpen={isDeleteModalOpen} onClose={handleCloseWarning}>
-          <ConfirmAction></ConfirmAction>
+          <ConfirmAction figureData={figureDataDelete} onClose={handleCloseWarning} onSave={handleLoading}></ConfirmAction>
         </AppModal>
       </div>
     </FigureManagerStyle>
@@ -211,9 +214,22 @@ const FigureManagerStyle = styled.div`
     margin: 0.2rem; 
   }
   .cell.filled {
-    background-color: var(--color-pastel-green);
-    color: var(--color-pastel-green);
-    border: 4px dotted rgba(var(--color-body-rgb), 1)
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-primary);
+    border: 1px dashed rgba(var(--color-body-rgb), 1)
+  }
+  .cell svg {
+    font-size: 24px;
+  }
+  .free {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-weight: 700;
+    font-size: 18px
   }
   .btn-actions {
     display: flex;
