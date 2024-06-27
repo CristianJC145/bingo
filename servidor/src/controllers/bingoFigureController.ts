@@ -21,35 +21,26 @@ export const getFigures = async (_req: Request, res: Response) => {
     }
 };
 
-export const addFigure = async (req: Request, res: Response) => {
+export const createOrUpdateFigure = async (req: Request, res: Response) => {
+    const { id } = req.body;
     let { name, pattern } = req.body;
 
     if (typeof pattern === 'string') {
         pattern = JSON.parse(pattern);
     }
-    pattern[2][2] = false;
-    try {
-        const [result] = await db.query<InsertResult>('INSERT INTO bingoFigures (name, pattern) VALUES (?, ?)', [name, JSON.stringify(pattern)]);
-        res.status(201).json({ id: result.insertId, name, pattern });
-    } catch (error) {
-        res.status(500).json({ message: 'Error adding figure' });
-    }
-};
 
-export const updateFigure = async (req: Request, res: Response) => {
-    const { id } = req.params;
-    let { name, pattern } = req.body;
-    if (typeof pattern === 'string') {
-        pattern = JSON.parse(pattern);
-    }
-    
     pattern[2][2] = false;
 
     try {
-        await db.query('UPDATE bingoFigures SET name = ?, pattern = ? WHERE id = ?', [name, JSON.stringify(pattern), id]);
-        res.status(200).json({ message: 'Figure updated' });
+        if (id) {
+            await db.query('UPDATE bingoFigures SET name = ?, pattern = ? WHERE id = ?', [name, JSON.stringify(pattern), id]);
+            res.status(200).json({ message: 'Figure updated' });
+        } else {
+            const [result] = await db.query<InsertResult>('INSERT INTO bingoFigures (name, pattern) VALUES (?, ?)', [name, JSON.stringify(pattern)]);
+            res.status(201).json({ id: result.insertId, name, pattern });
+        }
     } catch (error) {
-        res.status(500).json({ message: 'Error updating figure' });
+        res.status(500).json({ message: 'Error saving figure' });
     }
 };
 

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 
-import { updateFigure } from '../services/bingoFigure.service';
 import AppButton from '../../../shared/components/Buttons/AppButton';
 import { CreateOrUpdateFigureService } from '../services/createOrUpdateFigure.service';
 import { toast } from 'react-toastify';
@@ -47,27 +46,34 @@ const FigureEditor: React.FC<FigureEditorProps> = ({ id, onClose, onSave }) => {
   };
 
   const handleSave = async () => {
-    if (name.trim()) {
-      const dataSend = {
-        data: {
-          name: name,
-          pattern: pattern
-        }
-      }
-      if (id) {
-        await updateFigure(id, { name, pattern });
-        toast.success(`¡Se ha actualizado la figura correctamente!`);
-        onSave()
-      } else {
-        await createOrUpdateFigureService.run(dataSend)
-        toast.success(`¡Se ha creado la figura ${name} correctamente!`);
-        onSave();
-      }
-      onClose();
-    } else {
+    if (!name.trim()) {
       setError('El nombre es requerido');
+      return;
+    }
+  
+    const dataSend = {
+      data: {
+        name: name,
+        pattern: pattern,
+        ...(id && { id: id }),
+      },
+    };
+  
+    try {
+      if (id) {
+        await createOrUpdateFigureService.run(dataSend);
+        toast.success('¡Se ha actualizado la figura correctamente!');
+      } else {
+        await createOrUpdateFigureService.run(dataSend);
+        toast.success(`¡Se ha creado la figura ${name} correctamente!`);
+      }
+      onSave();
+      onClose();
+    } catch (error) {
+      toast.error('Hubo un problema al guardar la figura.');
     }
   };
+  
 
   return (
     <FigureEditorStyle>

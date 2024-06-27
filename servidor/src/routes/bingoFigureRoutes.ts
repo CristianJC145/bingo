@@ -1,14 +1,17 @@
 // server/src/routes/bingoRoutes.ts
 import { Router } from 'express';
-import { getFigures, deleteFigure, updateFigure, addFigure } from '../controllers/bingoFigureController';
+import { getFigures, deleteFigure, createOrUpdateFigure  } from '../controllers/bingoFigureController';
 
 const bingoFigureRouter = Router();
 
 const basePathApi = '/api/figures';
 
 bingoFigureRouter.get(`${basePathApi}/`, getFigures);
-bingoFigureRouter.post(`${basePathApi}/figure`, addFigure);
-bingoFigureRouter.put(`${basePathApi}/:id`, updateFigure);
+
+bingoFigureRouter.post(`${basePathApi}/figure`, createOrUpdateFigure);
+
+bingoFigureRouter.put(`${basePathApi}/figure/:id`, createOrUpdateFigure);
+
 bingoFigureRouter.delete(`${basePathApi}/:id`, deleteFigure);
 
 export default bingoFigureRouter;

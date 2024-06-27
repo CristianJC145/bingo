@@ -8,6 +8,6 @@ interface FigureDto {
 }
 
 export class CreateOrUpdateFigureService extends CreateOrUpdateBaseService<FigureDto> {
-    url= `${services.figures}/figure`;
-    isFormData = true;
+    url= `${services.figures}/figure/`;
+    isFormData = false;
 }

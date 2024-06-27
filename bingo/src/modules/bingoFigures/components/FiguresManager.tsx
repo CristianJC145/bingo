@@ -10,12 +10,6 @@ import AppIcon from '../../../shared/components/AppIcon';
 
 const getAllFiguresService = new GetAllFiguresService();
 
-interface Figure {
-  id: number;
-  name: string;
-  pattern: boolean[][];
-}
-
 const FigureManager: React.FC = () => {
   const [editingFigureId, setEditingFigureId] = useState<number | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
