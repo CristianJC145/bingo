@@ -40,9 +40,8 @@ const BingoGamePage: React.FC = () => {
   const checkForWinner = async (balls: number[]) => {
     if (!isGameStarted) return;
 
-    const response = await fetch('/api/checkWinner', {
+    const response = await fetch('http://localhost:3000/api/game/checkWinner', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         balls,
         figures: selectedFigures,
