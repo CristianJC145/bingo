@@ -1,9 +1,15 @@
 // src/pages/HomePage.tsx
-import React, { useState, useEffect } from 'react';
-import { saveBingoCard, getBingoCards, getLastBingoCardId, setLastBingoCardId } from '../services/bingo.service';
-import ExportToExcel from '../../../shared/components/ExportToExcel';
-import styled from 'styled-components';
-import AppButton from '../../../shared/components/Buttons/AppButton';
+import React, { useState, useEffect } from "react";
+import {
+  saveBingoCard,
+  getBingoCards,
+  getLastBingoCardId,
+  setLastBingoCardId,
+} from "../services/bingo.service";
+import ExportToExcel from "../../../shared/components/ExportToExcel";
+import styled from "styled-components";
+import AppButton from "../../../shared/components/Buttons/AppButton";
+import { toast } from "react-toastify";
 
 const HomePage: React.FC = () => {
   const [bingoCards, setBingoCards] = useState<number[][][]>([]);
@@ -30,9 +36,10 @@ const HomePage: React.FC = () => {
     setBingoCards([...bingoCards, ...newCards]);
     setLastId(lastId + numCards);
     await setLastBingoCardId(lastId + numCards);
+    toast.success(`¡Se ha generado ${numCards} cartones!`);
   };
 
-  const generateBingoCard = (id: number): { id: number, card: number[][] } => {
+  const generateBingoCard = (id: number): { id: number; card: number[][] } => {
     const card: number[][] = [];
     const columnRanges = [
       { start: 1, end: 15 },
@@ -45,7 +52,11 @@ const HomePage: React.FC = () => {
     for (let col = 0; col < 5; col++) {
       const column: number[] = [];
       while (column.length < 5) {
-        const num = Math.floor(Math.random() * (columnRanges[col].end - columnRanges[col].start + 1)) + columnRanges[col].start;
+        const num =
+          Math.floor(
+            Math.random() *
+              (columnRanges[col].end - columnRanges[col].start + 1)
+          ) + columnRanges[col].start;
         if (!column.includes(num)) {
           column.push(num);
         }
@@ -62,10 +73,17 @@ const HomePage: React.FC = () => {
     <HomePageStyle>
       <div className="home-page">
         <div className="page-content">
-          <h4 className='fw-bold'>Generador Cartones Bingo</h4>
-          <input className='form-control py-2 my-4' type="number" value={numCards} onChange={(e) => setNumCards(parseInt(e.target.value, 10))} />
-          <div className='btn-action'>
-            <AppButton onClick={generateBingoCards}>Generate Bingo Cards</AppButton>
+          <h4 className="fw-bold">Generador Cartones Bingo</h4>
+          <input
+            className="form-control py-2 my-4"
+            type="number"
+            value={numCards}
+            onChange={(e) => setNumCards(parseInt(e.target.value, 10))}
+          />
+          <div className="btn-action">
+            <AppButton onClick={generateBingoCards}>
+              Generate Bingo Cards
+            </AppButton>
             <ExportToExcel />
           </div>
         </div>
@@ -84,10 +102,10 @@ const HomePageStyle = styled.div`
   }
   .page-content {
     width: 400px;
-    border: 1px solid rgba(0, 0, 0, .05);
+    border: 1px solid rgba(0, 0, 0, 0.05);
     border-radius: 16px;
     padding: 3rem 2rem;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, .2);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
     text-align: center;
   }
   .btn-action {
@@ -96,4 +114,4 @@ const HomePageStyle = styled.div`
     justify-content: flex-end;
     gap: 1rem;
   }
-`
+`;

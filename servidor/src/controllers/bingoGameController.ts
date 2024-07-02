@@ -2,50 +2,63 @@ import db from "../database";
 import { Request, Response } from 'express';
 import { CheckWinnerRequest } from "../models/FigureCards";
 import { RowDataPacket } from 'mysql2/promise';
+import { Server as WebSocketServer } from 'ws';
+import { wss } from "..";
 
 interface BingoCard extends RowDataPacket {
     id: number;
-    card: boolean[][];
-  }
+    card: any;
+}
 
-const checkFigure = (pattern: boolean[][], balls: number[]) => {
-    for (let i = 0; i < pattern.length; i++) {
-        console.log("partner",i)
-      for (let j = 0; j < pattern[i].length; j++) {
-        if (i === 2 && j === 2) {
-            continue;
-          }
-        if (pattern[i][j] && !balls.includes(i * 15 + j + 1)) {
-          return false;
-        }
+const checkFigureMatch = (card: number[][], figure: any, balls: number[]): boolean => {
+  const transposedPattern = transposeFigure(figure);
+  const ballSet = new Set(balls);
+  for (let row = 0; row < transposedPattern.length; row++) {
+    for (let col = 0; col < transposedPattern[row].length; col++) {
+      if (row === 2 && col === 2) continue;
+      const cellNumber  = card[row][col];
+      const isSelected = ballSet.has(cellNumber);
+
+      if (transposedPattern[row][col] && !isSelected) {
+        return false;
       }
     }
-    return true;
+  }
+  return true;
 };
   
-  export const checkWinner = async (req: Request, res: Response) => {
-    const { balls, figures, range }: CheckWinnerRequest = req.body;
-  
-    try {
-      const [cartons]: [BingoCard[], any] = await db.query('SELECT * FROM bingoCards WHERE id BETWEEN ? AND ?', [range.start, range.end]);
-      let winner = false;
-      let winningCard = null;
-  
-      for (const carton of cartons) {
-        const card = carton.card;
-        for (const figure of figures) {
-            const pattern = figure.pattern;
-          if (checkFigure(pattern, balls)) {
-            console.log(card);
-            winner= true;
-            winningCard = card.indexOf;
-            break;
-          }
+export const checkWinner = async (req: Request, res: Response) => {
+  const { balls, figures, range }: CheckWinnerRequest = req.body;
+  try {
+    const [cartons]: [BingoCard[], any] = await db.query('SELECT * FROM bingoCards WHERE id BETWEEN ? AND ?', [range.start, range.end]);
+
+    let winner = false;
+    let winningCards = [];
+    for (const carton of cartons) {
+      const cardPattern = JSON.parse(carton.card);
+      for (const figure of figures) {
+        const figurePattern = figure.pattern;
+        if (checkFigureMatch(cardPattern, figurePattern, balls)) {
+          winner= true;
+          winningCards.push(carton.id);
+          console.log("cartones ganadores: ",winningCards)
+          break;
         }
-        if (winner) break;
       }
-      res.json({ winner, winningCard });
-    } catch (error) {
-      res.status(500).json({ message: 'Error checking winner' });
     }
+    const message = JSON.stringify({ type: 'winner-update', winner, winningCards, balls, figures });
+    wss.clients.forEach((client) => {
+      if (client.readyState === client.OPEN) {
+        client.send(message);
+      }
+    });
+    res.json({ winner, winningCards });
+  } catch (error) {
+    res.status(500).json({ message: 'Error checking winner' });
+  }
+};
+
+const transposeFigure = (figure: boolean[][]): boolean[][] => {
+  const transposed: boolean[][] = figure[0].map((_, colIndex) => figure.map(row => row[colIndex]));
+  return transposed;
 };

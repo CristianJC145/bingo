@@ -1,14 +1,14 @@
 import { Route, Routes } from "react-router-dom";
-import BingoFiguePage from "./pages/BingoFigurePage";
-
+import HomePage from "./pages/HomePage";
 import BingoLayout from "../../shared/layout/BingoLayout";
-const BingoFiguresRoutes: React.FC = () => {
+
+const BingoCustomizationRoutes: React.FC = () => {
   return (
     <BingoLayout namePage={"/"} routePage={""}>
       <Routes>
-        <Route path="/administator/*" element={<BingoFiguePage />}></Route>
+        <Route path="/sound/*" element={<HomePage />}></Route>
       </Routes>
     </BingoLayout>
   );
 };
-export default BingoFiguresRoutes;
+export default BingoCustomizationRoutes;

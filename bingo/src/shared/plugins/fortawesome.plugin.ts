@@ -65,6 +65,7 @@ import {
     faVectorSquare,
     faClone,
     faTriangleExclamation,
+    faSliders
 } from '@fortawesome/free-solid-svg-icons';
 
 library.add(
@@ -128,5 +129,6 @@ library.add(
     faGamepad,
     faVectorSquare,
     faClone,
-    faTriangleExclamation
+    faTriangleExclamation,
+    faSliders
     );

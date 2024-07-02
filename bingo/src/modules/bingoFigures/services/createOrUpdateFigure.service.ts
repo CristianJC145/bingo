@@ -2,9 +2,9 @@ import { CreateOrUpdateBaseService } from "../../../shared/services/createOrUpda
 import { services } from "../../../shared/constant/services";
 
 interface FigureDto {
-    id?: Number,
-    name: String,
-    pattern: Boolean[][];
+    id?: number,
+    name: string,
+    pattern: boolean[][];
 }
 
 export class CreateOrUpdateFigureService extends CreateOrUpdateBaseService<FigureDto> {

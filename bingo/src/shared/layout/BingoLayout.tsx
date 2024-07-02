@@ -14,9 +14,9 @@ interface BingoLayoutProps {
 
 const BingoLayout: React.FC<BingoLayoutProps> = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [smallSidebar, setSmallSidebar] = useState<any>();
+  const [smallSidebar, setSmallSidebar] = useState<unknown>();
 
-  const onSmallSidebar = (value: any) => {
+  const onSmallSidebar = (value: unknown) => {
     setSmallSidebar(value);
   };
 
@@ -57,7 +57,7 @@ const BingoLayoutStyles = styled.div`
   .vs-content {
     padding: var(--p-6) var(--p-6);
     flex-grow: 1;
-    background-color: #fff;
+    background-color: transparent;
   }
   @media (min-width: 992px) {
     .vs-content {

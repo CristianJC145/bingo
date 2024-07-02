@@ -1,8 +1,13 @@
-import React, { useEffect, useState } from 'react';
-import BallPanel from '../components/BallPanel';
-import FigureSelector from '../components/FigureSelector';
-import CartonRangeSelector from '../components/CartonRangeSelector';
-import AppButton from '../../../shared/components/Buttons/AppButton';
+import React, { useEffect, useState } from "react";
+import BallPanel from "../components/BallPanel";
+import FigureSelector from "../components/FigureSelector";
+import CartonRangeSelector from "../components/CartonRangeSelector";
+import AppButton from "../../../shared/components/Buttons/AppButton";
+import { CheckWinnerService } from "../services/checkWinner.service";
+import { toast } from "react-toastify";
+import styled from "styled-components";
+
+const checkWinnerService = new CheckWinnerService();
 
 interface Figure {
   id: number;
@@ -11,21 +16,27 @@ interface Figure {
 }
 
 const BingoGamePage: React.FC = () => {
-  const [selectedBalls, setSelectedBalls] = useState<number[]>([]);
   const [selectedFigures, setSelectedFigures] = useState<Figure[]>([]);
-  const [cartonRange, setCartonRange] = useState<{ start: number; end: number }>({ start: 0, end: 0 });
+  const [cartonRange, setCartonRange] = useState<{
+    start: number;
+    end: number;
+  }>({ start: 0, end: 0 });
   const [isGameStarted, setIsGameStarted] = useState(false);
+  const [allReady, setAllReady] = useState(false);
 
   useEffect(() => {
-    if (selectedFigures.length > 0 && cartonRange.start > 0 && cartonRange.end > 0) {
-      setIsGameStarted(true);
+    if (
+      selectedFigures.length > 0 &&
+      cartonRange.start > 0 &&
+      cartonRange.end > 0
+    ) {
+      setAllReady(true);
     } else {
-      setIsGameStarted(false);
+      setAllReady(false);
     }
   }, [selectedFigures, cartonRange]);
 
   const handleSelectBall = (balls: number[]) => {
-    setSelectedBalls(balls);
     checkForWinner(balls);
   };
 
@@ -36,38 +47,61 @@ const BingoGamePage: React.FC = () => {
   const handleSelectRange = (range: { start: number; end: number }) => {
     setCartonRange(range);
   };
+  const handleStartOrFinishGame = () => {
+    if (allReady) {
+      setIsGameStarted(!isGameStarted);
+      toast.success("Juego iniciado");
+    }
+  };
 
   const checkForWinner = async (balls: number[]) => {
     if (!isGameStarted) return;
+    const data = {
+      balls: balls,
+      figures: selectedFigures,
+      range: cartonRange,
+    };
 
-    const response = await fetch('http://localhost:3000/api/game/checkWinner', {
-      method: 'POST',
-      body: JSON.stringify({
-        balls,
-        figures: selectedFigures,
-        range: cartonRange
-      }),
-    });
+    const response = await checkWinnerService.run(data);
 
-    const result = await response.json();
-    if (result.winner) {
-      alert(`¡Hay un ganador! Cartón: ${result.winningCard}`);
+    const { winner, winningCards } = response;
+
+    if (winner) {
+      toast.success(`¡Hay un ganador! Cartón: ${winningCards}`);
     }
   };
 
   return (
-    <div className="bingo-game">
-      <BallPanel onSelectBall={handleSelectBall} />
-      <FigureSelector onSelectFigure={handleSelectFigure} />
-      <CartonRangeSelector onSelectRange={handleSelectRange} />
-      <AppButton
-        onClick={() => setIsGameStarted(true)}
-        disabled={!isGameStarted}
-      >
-        Iniciar Juego
-      </AppButton>
-    </div>
+    <BingoGamePageStyle>
+      <div className="bingo-game">
+        <div className="game-mainSection">
+          <FigureSelector onSelectFigure={handleSelectFigure} />
+          <BallPanel allReady={allReady} onSelectBall={handleSelectBall} />
+        </div>
+        <CartonRangeSelector onSelectRange={handleSelectRange} />
+        <AppButton
+          onClick={handleStartOrFinishGame}
+          disabled={!allReady}
+          className={`${!allReady ? "btn-disabled" : ""}`}
+        >
+          {`${!isGameStarted ? "Empezar Juego" : "Terminar Juego"}`}
+        </AppButton>
+      </div>
+    </BingoGamePageStyle>
   );
 };
 
 export default BingoGamePage;
+
+const BingoGamePageStyle = styled.div`
+  .btn-disabled {
+    background-color: rgba(var(--color-primary-rgb), 0.8);
+  }
+  .btn-disabled:hover {
+    background-color: rgba(var(--color-primary-rgb), 0.8);
+  }
+  .game-mainSection {
+    display: flex;
+    margin-bottom: 1rem;
+  }
+`;
