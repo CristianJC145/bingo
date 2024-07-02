@@ -1,20 +1,22 @@
 import React from 'react';
 import styled from 'styled-components';
+import { SizeConstant } from '../constant/size.constants';
 
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   children: React.ReactNode;
   title: string;
+  size? : SizeConstant;
 }
 
-const AppModal: React.FC<ModalProps> = ({ isOpen, onClose, children, title }) => {
+const AppModal: React.FC<ModalProps> = ({ isOpen, onClose, children, title, size }) => {
   if (!isOpen) return null;
 
   return (
     <AppModalStyle>
         <div className="modal-overlay">
-        <div className='modal-container'>
+        <div className={size ? `modal-container ${size}` : 'modal-container'}>
           <div className='modal-header'>
             <div className='header-title'>
               {title}
@@ -49,6 +51,9 @@ const AppModalStyle = styled.div`
     background: white;
     max-width: 450px;
     border-radius: 16px;
+  }
+  .modal-container.md {
+    max-width: 850px;
   }
   .modal-content {
       position: relative;

@@ -65,7 +65,9 @@ import {
     faVectorSquare,
     faClone,
     faTriangleExclamation,
-    faSliders
+    faSliders,
+    faPlay,
+    faRotate
 } from '@fortawesome/free-solid-svg-icons';
 
 library.add(
@@ -130,5 +132,7 @@ library.add(
     faVectorSquare,
     faClone,
     faTriangleExclamation,
-    faSliders
+    faSliders,
+    faPlay,
+    faRotate
     );

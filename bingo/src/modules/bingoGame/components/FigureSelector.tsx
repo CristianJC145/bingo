@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { GetAllFiguresService } from "../../bingoFigures/services/getAllFigures.service";
 import AppIcon from "../../../shared/components/AppIcon";
 import styled from "styled-components";
+import AppModal from "../../../shared/components/AppModal";
+import FigureSelectorModal from "./FigureSelectorModal";
 
 const getAllFiguresService = new GetAllFiguresService();
 
@@ -23,6 +25,8 @@ const FigureSelector: React.FC<FigureSelectorProps> = ({ onSelectFigure }) => {
   const [selectedFigureIds, setSelectedFigureIds] = useState<number[]>([]);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [selectedFigure, setSelectedFigure] = useState<any | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalFigures, setModalFigures] = useState<Figure[]>([]);
 
   const handleSelectChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const options = event.target.options;
@@ -31,14 +35,21 @@ const FigureSelector: React.FC<FigureSelectorProps> = ({ onSelectFigure }) => {
       .map((option) => Number(option.value));
 
     setSelectedFigureIds(selectedIds);
-    const selectedFigures = figures.filter((figure) =>
-      selectedIds.includes(figure.id)
-    );
-    onSelectFigure(selectedFigures);
+    onSelectFigure(modalFigures);
   };
+  const handleSelectFigures = (selectedFigures: Figure[]) => {
+    setModalFigures(selectedFigures);
+    setPattern(selectedFigures[0].pattern);
+  }
   const handleRowClick = (figure: Figure) => {
-    setPattern(figure.pattern);
     setSelectedFigure(figure);
+    setPattern(figure.pattern);
+  };
+  const handleOpenModal = ()=> {
+    setIsModalOpen(!isModalOpen);
+  }
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
   };
   const fetchFigures = async () => {
     const result = await getAllFiguresService.run();
@@ -51,7 +62,7 @@ const FigureSelector: React.FC<FigureSelectorProps> = ({ onSelectFigure }) => {
   return (
     <FigureSelectorStyle>
       <div className="figure-selector">
-        <div className="left-side">
+        <div className="left-side" onClick={handleOpenModal}>
           <div className="side-table">
             <div className="table-header">
               <h4>B</h4>
@@ -84,28 +95,29 @@ const FigureSelector: React.FC<FigureSelectorProps> = ({ onSelectFigure }) => {
                 ))
               )}
             </div>
-            {selectedFigure && (
-              <h6 className="table-figure-name">{selectedFigure.name}</h6>
-            )}
           </div>
         </div>
         <select
           multiple
           value={selectedFigureIds.map(String)}
           onChange={handleSelectChange}
-          className="form-select"
+          className="form-select list-figures"
         >
-          {figures.map((figure) => (
+          {modalFigures.map((figure) => (
             <option
               key={figure.id}
               value={figure.id}
               onClick={() => handleRowClick(figure)}
+              defaultChecked
             >
               {figure.name}
             </option>
           ))}
         </select>
       </div>
+      <AppModal title="Selecion de Figuras" size="md" isOpen={isModalOpen} onClose={handleCloseModal}>
+        <FigureSelectorModal onClose={handleCloseModal} figures={figures} onSelectFigures={handleSelectFigures}></FigureSelectorModal>
+      </AppModal>
     </FigureSelectorStyle>
   );
 };
@@ -114,15 +126,18 @@ export default FigureSelector;
 
 const FigureSelectorStyle = styled.div`
   .figure-selector {
+    box-shadow: 1px 4px 6px rgba(0, 0, 0, .4);
+    padding: 1rem;
+    border-radius: 8px;
     display: flex;
-    flex-direction: column;
     gap: 2rem;
   }
   .left-side {
-    width: 50%;
+    width: 140px;
+    cursor: pointer;
   }
   .side-table {
-    background-color: transparent;
+    background-color: var(--color-primary);
     border-radius: 8px;
     padding: 0.5rem;
     height: fit-content;
@@ -145,6 +160,7 @@ const FigureSelectorStyle = styled.div`
     color: var(--color-body);
     text-align: center;
     margin-top: 0.5rem;
+    margin-bottom: 0;
     font-weight: 700;
     font-size: 12px;
   }
@@ -174,5 +190,8 @@ const FigureSelectorStyle = styled.div`
     color: #fff;
     font-weight: 700;
     font-size: 9px;
+  }
+  .list-figures {
+    min-width: 140px;
   }
 `;

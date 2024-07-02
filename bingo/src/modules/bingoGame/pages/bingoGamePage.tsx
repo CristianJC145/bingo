@@ -6,6 +6,7 @@ import AppButton from "../../../shared/components/Buttons/AppButton";
 import { CheckWinnerService } from "../services/checkWinner.service";
 import { toast } from "react-toastify";
 import styled from "styled-components";
+import AppIcon from "../../../shared/components/AppIcon";
 
 const checkWinnerService = new CheckWinnerService();
 
@@ -75,17 +76,28 @@ const BingoGamePage: React.FC = () => {
     <BingoGamePageStyle>
       <div className="bingo-game">
         <div className="game-mainSection">
-          <FigureSelector onSelectFigure={handleSelectFigure} />
           <BallPanel allReady={allReady} onSelectBall={handleSelectBall} />
         </div>
-        <CartonRangeSelector onSelectRange={handleSelectRange} />
-        <AppButton
-          onClick={handleStartOrFinishGame}
-          disabled={!allReady}
-          className={`${!allReady ? "btn-disabled" : ""}`}
-        >
-          {`${!isGameStarted ? "Empezar Juego" : "Terminar Juego"}`}
-        </AppButton>
+        <div className="d-flex justify-content-between">
+          <textarea name="" id=""></textarea>
+          <textarea name="" id=""></textarea>
+          <div className="section">
+            <div className="d-flex justify-content-center mb-3">
+            <AppButton
+              onClick={handleStartOrFinishGame}
+              disabled={!allReady}
+              className={`${!allReady ? "btn-game btn-disabled" : "btn-game"}`}
+              icon={!isGameStarted ? "play" : "rotate"}
+            />
+            </div>
+            <CartonRangeSelector onSelectRange={handleSelectRange} />
+            <AppButton
+              disabled={!allReady}
+              label="Random"
+            />
+          </div>
+          <FigureSelector onSelectFigure={handleSelectFigure} />
+        </div>
       </div>
     </BingoGamePageStyle>
   );
@@ -94,14 +106,27 @@ const BingoGamePage: React.FC = () => {
 export default BingoGamePage;
 
 const BingoGamePageStyle = styled.div`
-  .btn-disabled {
-    background-color: rgba(var(--color-primary-rgb), 0.8);
-  }
   .btn-disabled:hover {
     background-color: rgba(var(--color-primary-rgb), 0.8);
   }
   .game-mainSection {
     display: flex;
+    gap: 1rem;
     margin-bottom: 1rem;
+  }
+  .btn-game {
+    background-color: var(--color-primary);
+    border-radius: 999px;
+    width: 70px;
+    height: 70px;
+    font-size: 24px;
+  }
+  .btn-game.btn-disabled {
+    background-color: rgba(var(--color-primary-rgb), 0.8);
+  }
+  .section {
+    padding: 1rem;
+    box-shadow: 1px 3px 6px rgba(0, 0, 0, .2);
+    border-radius: 16px;
   }
 `;
