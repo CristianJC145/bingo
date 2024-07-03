@@ -23,42 +23,47 @@ const FigureSelector: React.FC<FigureSelectorProps> = ({ onSelectFigure }) => {
   );
   const [figures, setFigures] = useState<Figure[]>([]);
   const [selectedFigureIds, setSelectedFigureIds] = useState<number[]>([]);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [selectedFigure, setSelectedFigure] = useState<any | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalFigures, setModalFigures] = useState<Figure[]>([]);
+  const [figuresModal, setFiguresModal] = useState<number[]>([]);
 
-  const handleSelectChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const options = event.target.options;
-    const selectedIds = Array.from(options)
-      .filter((option) => option.selected)
-      .map((option) => Number(option.value));
-
-    setSelectedFigureIds(selectedIds);
-    onSelectFigure(modalFigures);
-  };
-  const handleSelectFigures = (selectedFigures: Figure[]) => {
-    setModalFigures(selectedFigures);
-    setPattern(selectedFigures[0].pattern);
-  }
-  const handleRowClick = (figure: Figure) => {
-    setSelectedFigure(figure);
-    setPattern(figure.pattern);
-  };
-  const handleOpenModal = ()=> {
-    setIsModalOpen(!isModalOpen);
-  }
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-  };
-  const fetchFigures = async () => {
-    const result = await getAllFiguresService.run();
-    setFigures(result.data);
-  };
   useEffect(() => {
+    const fetchFigures = async () => {
+      const result = await getAllFiguresService.run();
+      setFigures(result.data);
+    };
+
     fetchFigures();
   }, []);
 
+  useEffect(() => {
+    if (figuresModal.length > 0) {
+      setSelectedFigureIds([figuresModal[0]])
+    }
+  }, [figuresModal]);
+
+  const handleSelectFigures = (selectedFigureIds: number[]) => {
+    setFiguresModal(selectedFigureIds);
+    setSelectedFigureIds(selectedFigureIds);
+  };
+
+  const handleOpenModal = () => {
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+  };
+
+  const handleSelectChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedIds = Array.from(event.target.selectedOptions).map(option => Number(option.value));
+    setSelectedFigureIds(selectedIds);
+  };
+  const handleRowClick = (figureId: number) => {
+    const selectedFigure = figures.find(figure => figure.id === figureId);
+    if (selectedFigure) {
+      setPattern(selectedFigure.pattern);
+    }
+  }
   return (
     <FigureSelectorStyle>
       <div className="figure-selector">
@@ -100,23 +105,26 @@ const FigureSelector: React.FC<FigureSelectorProps> = ({ onSelectFigure }) => {
         <select
           multiple
           value={selectedFigureIds.map(String)}
-          onChange={handleSelectChange}
           className="form-select list-figures"
+          onChange={handleSelectChange}
         >
-          {modalFigures.map((figure) => (
-            <option
-              key={figure.id}
-              value={figure.id}
-              onClick={() => handleRowClick(figure)}
-              defaultChecked
-            >
-              {figure.name}
-            </option>
-          ))}
+          {figuresModal.map((id) => {
+            const figure = figures.find((figure) => figure.id === id);
+            return (
+              <option key={id} value={id} onClick={() => handleRowClick(id)}>
+                {figure ? figure.name : `Figure ${id}`} {/* Muestra el nombre de la figura si se encuentra */}
+              </option>
+            );
+        })}
         </select>
       </div>
-      <AppModal title="Selecion de Figuras" size="md" isOpen={isModalOpen} onClose={handleCloseModal}>
-        <FigureSelectorModal onClose={handleCloseModal} figures={figures} onSelectFigures={handleSelectFigures}></FigureSelectorModal>
+      <AppModal title="Select Figures" size="md" isOpen={isModalOpen} onClose={handleCloseModal}>
+        <FigureSelectorModal 
+          onClose={handleCloseModal}
+          figures={figures}
+          selectedFigures={selectedFigureIds}
+          onSelectFigures={handleSelectFigures}
+        />
       </AppModal>
     </FigureSelectorStyle>
   );

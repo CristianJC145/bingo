@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import AppButton from "../../../shared/components/Buttons/AppButton";
 import AppIcon from "../../../shared/components/AppIcon";
 import styled from "styled-components";
@@ -11,32 +11,32 @@ interface Figure {
 interface FigureSelectorModalProps {
     onClose: () => void;
     figures: Figure[];
-    onSelectFigures: (selectedFigures: Figure[]) => void;
+    selectedFigures: number[];
+    onSelectFigures: (selectedFigures: number[]) => void;
 }
-const FigureSelectorModal: React.FC<FigureSelectorModalProps> = ({ onClose, figures, onSelectFigures,}) => {
-    const [selectedFigureIds, setSelectedFigureIds] = useState<number[]>([]);
+const FigureSelectorModal: React.FC<FigureSelectorModalProps> = ({ onClose, figures, onSelectFigures, selectedFigures}) => {
+  const [localSelectedFigures, setLocalSelectedFigures] = useState<number[]>(selectedFigures);  
     const [pattern, setPattern] = useState<boolean[][]>(
       Array(5).
       fill(Array(5).fill(false))
     );
-    const [selectedFigure, setSelectedFigure] = useState<any | null>(null);
     const toggleFigureSelection = (figureId: number) => {
-      setSelectedFigureIds((prevSelected: number[]) => 
+      setLocalSelectedFigures((prevSelected: number[]) => 
         prevSelected.includes(figureId) 
           ? prevSelected.filter(id => id !== figureId) 
           : [...prevSelected, figureId]
       );
     };
     const handleSave = () => {
-      const selectedFigures = figures.filter(figure => selectedFigureIds.includes(figure.id));
-      console.log(selectedFigures);
-      onSelectFigures(selectedFigures);
+      onSelectFigures(localSelectedFigures);
       onClose();
     };
     const handleRowClick = (figure: Figure) => {
       setPattern(figure.pattern);
-      setSelectedFigure(figure);
     };
+    useEffect(() => {
+      setLocalSelectedFigures(selectedFigures);
+    },[selectedFigures]);
     return (
       <FigureSelectorModalStyle>
         <div className="modal-main-content">
@@ -45,7 +45,7 @@ const FigureSelectorModal: React.FC<FigureSelectorModalProps> = ({ onClose, figu
               <div className="list-item" key={figure.id}>
                 <input
                   type="checkbox"
-                  checked={selectedFigureIds.includes(figure.id)}
+                  checked={localSelectedFigures.includes(figure.id)}
                   onChange={() => toggleFigureSelection(figure.id)}
                   onClick={()=> handleRowClick(figure)}
                   className="form-check-input"
@@ -69,28 +69,29 @@ const FigureSelectorModal: React.FC<FigureSelectorModalProps> = ({ onClose, figu
               <div className="m-table-content">
                 {pattern.map((row: boolean[], rowIndex: number) =>
                   row.map((cell: boolean, cellIndex: number) => (
-                    <div
-                      key={`${rowIndex}-${cellIndex}`}
-                      className={`${
-                      rowIndex === 2 && cellIndex === 2
-                        ? "m-free"
-                        : cell
-                        ? "m-cell filled"
-                        : "m-cell"
-                      }`}
-                    >
-                      {rowIndex === 2 && cellIndex === 2 ? (
-                        <span>FREE</span>
-                      ) : cell ? (
-                        <AppIcon icon="star"></AppIcon>
-                      ) : (
-                        ""
-                      )}
+                    <div>
+                      <div
+                        key={`${rowIndex}-${cellIndex}`}
+                        className={`${
+                        rowIndex === 2 && cellIndex === 2
+                          ? "m-free"
+                          : cell
+                          ? "m-cell filled"
+                          : "m-cell"
+                        }`}
+                      >
+                        {rowIndex === 2 && cellIndex === 2 ? (
+                          <span>FREE</span>
+                        ) : cell ? (
+                          <AppIcon icon="star"></AppIcon>
+                        ) : (
+                          ""
+                        )}
+                      </div>
                     </div>
                   ))
                 )}
               </div>
-              <h5 className="m-table-figure-name">{`${selectedFigure ? selectedFigure.name : "Figura"}`}</h5>
             </div>
           </div>
         </div>
