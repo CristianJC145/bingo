@@ -24,7 +24,7 @@ const CartonRangeSelector: React.FC<CartonRangeSelectorProps> = ({ onSelectRange
           onChange={(e) => setStart(Number(e.target.value))}
           placeholder="Desde"
           onBlur={handleRangeChange}
-          className='form-control py-2'
+          className='form-input'
         />
         <input
           type="number"
@@ -32,7 +32,7 @@ const CartonRangeSelector: React.FC<CartonRangeSelectorProps> = ({ onSelectRange
           onChange={(e) => setEnd(Number(e.target.value))}
           placeholder="Hasta"
           onBlur={handleRangeChange}
-          className='form-control py-2'
+          className='form-input'
         />
       </div>
     </CartonRangeSelectorStyle>

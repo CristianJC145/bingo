@@ -16,9 +16,9 @@ const AppFooter:React.FC<AppFooterProps> = ({style}) => {
                 </div>
 
                 <div className="vs-footer-right" >
-                    <AppButton icon="fa-brands fa-instagram" variant='dark' ariaLabel='Instagram'></AppButton>
-                    <AppButton icon="fa-brands fa-youtube" variant='dark' ariaLabel='Youtube'></AppButton>
-                    <AppButton icon="fa-brands fa-twitter" variant='dark' ariaLabel='X'></AppButton>
+                    <AppButton icon="fa-brands fa-instagram" variant="white" ariaLabel='Instagram'></AppButton>
+                    <AppButton icon="fa-brands fa-youtube" variant='white' ariaLabel='Youtube'></AppButton>
+                    <AppButton icon="fa-brands fa-twitter" variant='white' ariaLabel='X'></AppButton>
                 </div>
             </footer>
         </AppFooterStyles>
@@ -31,16 +31,15 @@ footer {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    border-top: 2px solid var(--color-body);
     padding: var(--p-8);
     flex-direction: column;
     gap: 1rem;
-    background-color: #fff;
+    background-color: #222340;
 }
 .vs-footer-left {
     margin-left: 0;
     font-weight: 600;
-    color: var(--color-gray-400);
+    color: var(--color-light);
 }
 .vs-footer-right {
     margin-right: 0;

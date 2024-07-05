@@ -35,6 +35,7 @@ const FigureSelectorModal: React.FC<FigureSelectorModalProps> = ({ onClose, figu
       setPattern(figure.pattern);
     };
     useEffect(() => {
+      console.log("figuras locales",localSelectedFigures);
       setLocalSelectedFigures(selectedFigures);
     },[selectedFigures]);
     return (
@@ -69,7 +70,6 @@ const FigureSelectorModal: React.FC<FigureSelectorModalProps> = ({ onClose, figu
               <div className="m-table-content">
                 {pattern.map((row: boolean[], rowIndex: number) =>
                   row.map((cell: boolean, cellIndex: number) => (
-                    <div>
                       <div
                         key={`${rowIndex}-${cellIndex}`}
                         className={`${
@@ -88,7 +88,6 @@ const FigureSelectorModal: React.FC<FigureSelectorModalProps> = ({ onClose, figu
                           ""
                         )}
                       </div>
-                    </div>
                   ))
                 )}
               </div>

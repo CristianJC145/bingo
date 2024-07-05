@@ -139,7 +139,7 @@ const AppSidebarStyle = styled.div`
     display: flex;
     position: absolute;
     width: 100%;
-    border-bottom: 1px solid rgba(var(--color-body-rgb), 0.3);
+    border-bottom: 1px solid var(--color-gray-800);
     bottom: 0;
   }
   .vs-header--logo {
@@ -198,7 +198,6 @@ const AppSidebarStyle = styled.div`
   @media (min-width: 992px) {
     .vs-sidebar {
       transform: translateX(0);
-      border-right: 2px solid var(--color-body);
       border-radius: unset;
       box-shadow: unset;
       margin-bottom: 0;

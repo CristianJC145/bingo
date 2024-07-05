@@ -47,7 +47,7 @@ const AppNavbar: React.FC<AppNavbarProps> = ({ toggleSidebar }) => {
       <nav className="vs-AppNavbar">
         <div className="vs-left-nav">
           <AppButton
-            variant="dark"
+            variant="white"
             icon="bars"
             className="vs-btn-openSidebar"
             onClick={toggleSidebar}
@@ -90,7 +90,7 @@ const AppNavbar: React.FC<AppNavbarProps> = ({ toggleSidebar }) => {
         <div className="vs-right-nav">
           <AppButton
             icon="bell"
-            variant="dark"
+            variant="white"
             ariaLabel="Notifications"
           ></AppButton>
           <div className="vs-navbar-profile">
@@ -138,8 +138,7 @@ const AppNavbarStyle = styled.div`
     align-items: center;
     justify-content: space-between;
     height: var(--navbar-height);
-    background-color: #fff;
-    border-bottom: 2px solid var(--color-body);
+    background-color: #222340;
     padding: 0 var(--p-4);
   }
   .vs-left-nav {
@@ -151,6 +150,7 @@ const AppNavbarStyle = styled.div`
     display: flex;
     gap: 0.5rem;
     text-transform: capitalize;
+    color: var(--color-light);
   }
   .vs-breadcrumbs-item svg {
     margin-left: 0.5rem;

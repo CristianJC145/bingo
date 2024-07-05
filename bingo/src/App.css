@@ -36,3 +36,19 @@
 .no-scroll {
   overflow: hidden;
 }
+.form-input {
+  background-color: #27284a;
+  border-radius: 8px;
+  padding: var(--p-2) var(--p-4);
+  border: 2px solid #404964;
+  color: var(--color-light);
+}
+.form-input:focus-visible {
+  outline: none;
+}
+.form-input:focus {
+  box-shadow: 0 0 4px rgba(0, 0, 0, .4);
+}
+.form-input::placeholder {
+  color: rgba(var(--color-light-rgb), .6);
+}

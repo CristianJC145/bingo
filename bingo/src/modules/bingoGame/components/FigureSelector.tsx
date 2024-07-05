@@ -25,6 +25,9 @@ const FigureSelector: React.FC<FigureSelectorProps> = ({ onSelectFigure }) => {
   const [selectedFigureIds, setSelectedFigureIds] = useState<number[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [figuresModal, setFiguresModal] = useState<number[]>([]);
+  const [playing, setPlaying] = useState(false);
+  const [range, setRange] = useState(false);
+
 
   useEffect(() => {
     const fetchFigures = async () => {
@@ -37,13 +40,21 @@ const FigureSelector: React.FC<FigureSelectorProps> = ({ onSelectFigure }) => {
 
   useEffect(() => {
     if (figuresModal.length > 0) {
-      setSelectedFigureIds([figuresModal[0]])
+      setSelectedFigureIds([figuresModal[0]]);
+      const pattern = figures.find((figure) => figure.id === selectedFigureIds[0]);
+      setPattern(pattern?.pattern!)
     }
   }, [figuresModal]);
 
   const handleSelectFigures = (selectedFigureIds: number[]) => {
     setFiguresModal(selectedFigureIds);
     setSelectedFigureIds(selectedFigureIds);
+
+    const selectedFigures: Figure[] = selectedFigureIds.map((id) => {
+      return figures.find((figure) => figure.id === id)
+    }).filter((figure): figure is Figure => figure !==undefined);
+
+    onSelectFigure(selectedFigures);
   };
 
   const handleOpenModal = () => {
@@ -66,7 +77,7 @@ const FigureSelector: React.FC<FigureSelectorProps> = ({ onSelectFigure }) => {
   }
   return (
     <FigureSelectorStyle>
-      <div className="figure-selector">
+      <div className="section figure-selector">
         <div className="left-side" onClick={handleOpenModal}>
           <div className="side-table">
             <div className="table-header">
@@ -112,7 +123,7 @@ const FigureSelector: React.FC<FigureSelectorProps> = ({ onSelectFigure }) => {
             const figure = figures.find((figure) => figure.id === id);
             return (
               <option key={id} value={id} onClick={() => handleRowClick(id)}>
-                {figure ? figure.name : `Figure ${id}`} {/* Muestra el nombre de la figura si se encuentra */}
+                {figure ? figure.name : `Figure ${id}`}
               </option>
             );
         })}
@@ -122,7 +133,7 @@ const FigureSelector: React.FC<FigureSelectorProps> = ({ onSelectFigure }) => {
         <FigureSelectorModal 
           onClose={handleCloseModal}
           figures={figures}
-          selectedFigures={selectedFigureIds}
+          selectedFigures={figuresModal}
           onSelectFigures={handleSelectFigures}
         />
       </AppModal>
@@ -201,5 +212,18 @@ const FigureSelectorStyle = styled.div`
   }
   .list-figures {
     min-width: 140px;
+    background-color: rgba(0,0,0, .3);
+    border: none;
+    color: var(--color-light);
+  }
+  .list-figures:focus {
+    box-shadow: 0 0 4px 4px rgba(0, 0, 0, .07);
+  }
+  .list-figures::-webkit-scrollbar {
+    width: 8px;
+  }
+  .list-figures::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
   }
 `;
