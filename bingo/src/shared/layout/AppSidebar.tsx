@@ -10,7 +10,7 @@ import { useLocation } from "react-router-dom";
 interface AppSidebarProps {
   isOpen: boolean;
   onClose: () => void;
-  onSmallSidebar: (value: any) => void;
+  onSmallSidebar: (value: boolean) => void;
 }
 const AppSidebar: React.FC<AppSidebarProps> = ({
   isOpen,
@@ -120,7 +120,7 @@ const AppSidebarStyle = styled.div`
     margin-bottom: 1rem;
     margin-top: 1rem;
     margin-left: 1rem;
-    background-color: #222340;
+    background-color: #15143c;
   }
   .vs-sidebar.open {
     transform: translateX(0);

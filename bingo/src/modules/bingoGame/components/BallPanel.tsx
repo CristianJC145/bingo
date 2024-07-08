@@ -28,15 +28,24 @@ const BallPanel: React.FC<BallPanelProps> = ({ onSelectBall, allReady }) => {
   return (
     <BallPanelStyle className="w-100">
       <div className="ball-panel">
-        {[...Array(75)].map((_, i) => {
+        {[...Array(75)].map((index, i) => {
           const ball = i + 1;
           return (
-            <div className={selectedBalls.includes(ball) ? "ball-container selected" : "ball-container"}>
+            <div
+              className={
+                selectedBalls.includes(ball)
+                  ? "ball-container selected"
+                  : "ball-container"
+              }
+              key={i}
+            >
               <button
-                key={ball}
+                key={`ball-${index}`}
                 onClick={() => handleBallClick(ball)}
                 disabled={!allReady}
-                className={selectedBalls.includes(ball) ? "ball selected" : "ball"}
+                className={
+                  selectedBalls.includes(ball) ? "ball selected" : "ball"
+                }
               >
                 {ball}
               </button>
@@ -67,11 +76,17 @@ const BallPanelStyle = styled.div`
     height: 45px;
   }
   .ball-container.selected {
-    background: linear-gradient(45deg, #32007f54, #8A2BE2, #6a14b6, #8A2BE2, #32007f54);
+    background: linear-gradient(
+      45deg,
+      #1d1c48,
+      #6056ee,
+      #1d1c48,
+      #6056ee,
+      #32007f54
+    );
     background-size: 300% 300%;
-    box-shadow: 0 0 12px rgba(75, 0, 130, 0.5),
-              0 0 10px rgba(138, 43, 226, 0.5),
-              0 0 14px rgba(138, 43, 226, 0.5);
+    box-shadow: 0 0 12px rgba(29, 28, 72, 0.5), 0 0 10px rgba(116, 43, 226, 0.5),
+      0 0 14px rgba(138, 43, 226, 0.5);
     animation: gradient 4s ease infinite;
   }
   .ball {
@@ -79,7 +94,13 @@ const BallPanelStyle = styled.div`
     width: 40px;
     height: 40px;
     border-radius: 900px;
-    background: radial-gradient(circle at 70% 10%, #ffffff, #32007f54 25%, #430671 60%, #2d0f4b8a 90%);
+    background: radial-gradient(
+      circle at 70% 10%,
+      #ffffff,
+      #6056ee 25%,
+      #1d1c48 60%,
+      #2d0f4b8a 90%
+    );
     color: var(--color-body);
     font-size: 1.25rem;
     font-weight: 700;
@@ -92,13 +113,13 @@ const BallPanelStyle = styled.div`
   }
   @keyframes gradient {
     0% {
-        background-position: 0% 50%;
+      background-position: 0% 50%;
     }
     50% {
-        background-position: 100% 50%;
+      background-position: 100% 50%;
     }
     100% {
-        background-position: 0% 50%;
+      background-position: 0% 50%;
     }
   }
 `;

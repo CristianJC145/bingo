@@ -57,11 +57,11 @@ const BingoLayoutStyles = styled.div`
   .vs-content {
     padding: var(--p-6) var(--p-6);
     flex-grow: 1;
-    background-color: #2a324b;
+    background-color: #1e1d49;
     border-radius: 12px;
     margin: 0 var(--p-6);
-    box-shadow: inset 1px 1px 3px rgba(255, 255, 255, .05), 2px 1px 7px 3px rgba(0, 0, 0, .05);
-    
+    box-shadow: 1px 1px 3px rgba(255, 255, 255, 0.05),
+      2px 1px 7px 3px rgba(0, 0, 0, 0.05);
   }
   @media (min-width: 992px) {
     .vs-content {

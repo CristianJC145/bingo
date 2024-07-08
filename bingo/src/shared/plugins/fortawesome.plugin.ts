@@ -67,7 +67,8 @@ import {
     faTriangleExclamation,
     faSliders,
     faPlay,
-    faRotate
+    faRotate,
+    faPowerOff
 } from '@fortawesome/free-solid-svg-icons';
 
 library.add(
@@ -134,5 +135,6 @@ library.add(
     faTriangleExclamation,
     faSliders,
     faPlay,
-    faRotate
+    faRotate,
+    faPowerOff
     );

@@ -23,7 +23,7 @@ const BingoGamePage: React.FC = () => {
   }>({ start: 0, end: 0 });
   const [isGameStarted, setIsGameStarted] = useState(false);
   const [allReady, setAllReady] = useState(false);
-  const [balls, setBalls] = useState<number[]>([])
+  const [balls, setBalls] = useState<number[]>([]);
 
   useEffect(() => {
     if (
@@ -40,7 +40,7 @@ const BingoGamePage: React.FC = () => {
   const handleSelectBall = (balls: number[]) => {
     setBalls(balls);
     checkForWinner(balls);
-    console.log(balls)
+    console.log(balls);
   };
 
   const handleSelectFigure = (figures: Figure[]) => {
@@ -82,29 +82,67 @@ const BingoGamePage: React.FC = () => {
         </div>
         <div className="d-flex justify-content-between flex-sm-row flex-column">
           <div className="section balls">
-            <div className="balls-header">#Jugados</div>
+            <div className="section-header">#Jugados</div>
             <div className="balls-list">
               {balls.map((ball, index) => (
-                <span key={index} className="ball-number">{ball}</span>
+                <span key={index} className="ball-number">
+                  {ball}
+                </span>
               ))}
             </div>
           </div>
           <div className="section">
-            <div className="d-flex justify-content-center mb-4 mt-3">
-            <div className={`${allReady ? isGameStarted ? "btn-game-container rotate" : "btn-game-container" : "btn-game-container btn-disabled"}`}>
-              <AppButton
-                onClick={handleStartOrFinishGame}
-                disabled={!allReady}
-                className="btn-game"
-                icon={!isGameStarted ? "play" : "rotate"}
-              />
-            </div>
+            <div className="section-header">Cartones en Juego</div>
+            <div className="d-flex justify-content-center mb-4 mt-3 align-items-center gap-4">
+              <div className="d-flex flex-column gap-2 align-items-center">
+                <span className="section-title">Aleatorio</span>
+                <AppButton icon="power-on"></AppButton>
+                <AppButton icon="power-off"></AppButton>
+              </div>
             </div>
             <CartonRangeSelector onSelectRange={handleSelectRange} />
-            <AppButton
-              disabled={!allReady}
-              label="Random"
-            />
+          </div>
+          <div className="section">
+            <div className="section-header">Juego</div>
+            <div className="section-content">
+              <div
+                className={`${
+                  allReady
+                    ? isGameStarted
+                      ? "btn-game-container rotate"
+                      : "btn-game-container"
+                    : "btn-game-container btn-disabled"
+                }`}
+              >
+                <AppButton
+                  onClick={handleStartOrFinishGame}
+                  disabled={!allReady}
+                  className="btn-game"
+                  icon={!isGameStarted ? "play" : "rotate"}
+                />
+              </div>
+
+              <div className="d-flex flex-column align-items-center gap-2">
+                <div>
+                  <span className="section-title">Balota Aleatoria</span>
+                </div>
+                <div className="d-flex gap-3">
+                  <div className="btn-action-on">
+                    <AppButton
+                      className="power-on"
+                      icon="power-off"
+                    ></AppButton>
+                  </div>
+                  <div className="btn-action-off">
+                    <AppButton
+                      className="power-off"
+                      icon="power-off"
+                    ></AppButton>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <AppButton className="mt-3" disabled={!allReady} label="Random" />
           </div>
           <FigureSelector onSelectFigure={handleSelectFigure} />
         </div>
@@ -116,6 +154,10 @@ const BingoGamePage: React.FC = () => {
 export default BingoGamePage;
 
 const BingoGamePageStyle = styled.div`
+  .bingo-game {
+    max-width: 1500px;
+    margin: 0 auto;
+  }
   .game-mainSection {
     display: flex;
     gap: 1rem;
@@ -123,10 +165,11 @@ const BingoGamePageStyle = styled.div`
   }
   .btn-game-container {
     position: relative;
-    box-shadow: 0 0 20px rgba(75, 0, 130, 0.5),
-        0 0 20px rgba(138, 43, 226, 0.5),
-        0 0 30px rgba(138, 43, 226, 0.5);
+    box-shadow: 0 0 20px rgba(75, 0, 130, 0.5), 0 0 20px rgba(138, 43, 226, 0.5),
+      0 0 30px rgba(138, 43, 226, 0.5);
     border-radius: 999px;
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
   }
   .btn-game-container::before {
     content: "";
@@ -138,11 +181,11 @@ const BingoGamePageStyle = styled.div`
     border-radius: 50%;
     background: conic-gradient(
       from 0deg,
-      #8A2BE2 0deg 120deg,
-      transparent 120deg 180deg,
-      #430f87 180deg 300deg,
+      #1d1c48 0deg 120deg,
+      #1d1c48 130deg 180deg,
+      transparent 180deg 300deg,
       transparent 300deg 360deg,
-      blue 360deg
+      transparent 360deg
     );
     z-index: 1;
   }
@@ -152,16 +195,22 @@ const BingoGamePageStyle = styled.div`
   .btn-game-container::after {
     content: "";
     position: absolute;
-    top: -4px;
-    left: -4px;
-    right: -4px;
-    bottom: -4px;
+    top: 50%;
+    left: 50%;
+    width: 140%;
+    height: 140%;
+    border: 8px solid transparent;
+    border-top-color: #f8ad2a;
+    border-bottom-color: #f8ad2a;
     border-radius: 50%;
-    background-color: white;
+    transform: translate(-50%, -50%) rotate(0deg);
+    box-sizing: border-box;
+    animation: rotate 2s linear infinite;
+    background-color: #2c2a63;
     z-index: 0;
   }
   .btn-game-container.btn-disabled {
-    opacity: .5;
+    opacity: 0.5;
     box-shadow: none;
   }
   .btn-game-container.btn-disabled::before {
@@ -181,33 +230,95 @@ const BingoGamePageStyle = styled.div`
   }
   .section {
     padding: 1rem;
-    box-shadow: 1px 3px 6px rgba(0, 0, 0, .2);
+    box-shadow: 1px 3px 6px rgba(0, 0, 0, 0.2);
     border-radius: 16px;
-    background-color: #343c57;
+    background: linear-gradient(130deg, #2c2a63, #3e3a83);
     color: var(--color-light);
+    min-width: 220px;
+  }
+  .section-title {
+    font-size: 0.85rem;
+    font-weight: 300;
+  }
+  .section-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 1rem;
+    align-items: center;
+    justify-content: center;
+  }
+  .btn-action-on {
+    padding: 0.5rem;
+    border-radius: 99px;
+    background: linear-gradient(
+      0deg,
+      rgba(65, 255, 51, 0.2) 3%,
+      rgba(4, 99, 30, 0.2) 80%,
+      rgba(0, 0, 0, 0) 98%
+    );
+  }
+  .btn-action-off {
+    padding: 0.5rem;
+    border-radius: 99px;
+    background: linear-gradient(
+      0deg,
+      rgba(var(--color-danger-600-rgb), 0.3) 3%,
+      rgba(var(--color-danger-600-rgb), 0.3) 80%,
+      rgba(0, 0, 0, 0) 98%
+    );
+  }
+  .btn-action-off .vs-btn:hover,
+  .btn-action-on .vs-btn:hover {
+    background-color: initial;
+    opacity: 0.7;
+  }
+  .power-on {
+    border-radius: 99px;
+    background: linear-gradient(
+      0deg,
+      rgba(167, 250, 159, 1) 0%,
+      rgba(65, 255, 51, 1) 3%,
+      rgba(4, 99, 30, 1) 60%,
+      rgba(0, 0, 0, 0) 90%
+    );
+  }
+  .power-off {
+    border-radius: 99px;
+    background: linear-gradient(
+      0deg,
+      var(--color-pastel-red),
+      var(--color-danger),
+      var(--color-danger-600) 60%,
+      rgba(0, 0, 0, 0)
+    );
+  }
+  .power-off svg {
+    transform: rotate(180deg);
   }
   .balls {
-    min-width: 300px;
+    max-width: 100px;
+    width: 100%;
   }
-  .balls-header {
+  .section-header {
     text-align: center;
     padding-bottom: 1rem;
-    border-bottom: 1px solid var(--color-gray-800);
+    border-bottom: 2px solid rgba(var(--color-light-rgb), 0.04);
   }
   .balls-list {
     display: grid;
-    grid-template-columns: repeat(12, 1fr);
-    gap: 1rem;
-    margin-top: 1rem; 
+    grid-template-columns: repeat(10, 1fr);
+    gap: 0.5rem;
+    margin-top: 1rem;
   }
   .ball-number {
     color: #fff;
-    background-color: rgba(0,0,0, .3);
+    background-color: rgba(0, 0, 0, 0.3);
     text-align: center;
   }
   @media (min-width: 768px) {
     .balls {
-      min-width: 600px;
+      max-width: 350px;
     }
   }
   @keyframes rotateBorder {

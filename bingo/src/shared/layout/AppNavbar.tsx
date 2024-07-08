@@ -138,7 +138,7 @@ const AppNavbarStyle = styled.div`
     align-items: center;
     justify-content: space-between;
     height: var(--navbar-height);
-    background-color: #222340;
+    background-color: #15143c;
     padding: 0 var(--p-4);
   }
   .vs-left-nav {
@@ -200,7 +200,7 @@ const AppNavbarStyle = styled.div`
     border-radius: 999px;
     padding: 0.225rem;
   }
-  .vs-profile-btn: hover {
+  .vs-profile-btn:hover {
     background-color: rgba(var(--color-gray-400-rgb), 0.03);
     border-color: rgba(var(--color-gray-400-rgb), 0.1);
   }

@@ -25,9 +25,6 @@ const FigureSelector: React.FC<FigureSelectorProps> = ({ onSelectFigure }) => {
   const [selectedFigureIds, setSelectedFigureIds] = useState<number[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [figuresModal, setFiguresModal] = useState<number[]>([]);
-  const [playing, setPlaying] = useState(false);
-  const [range, setRange] = useState(false);
-
 
   useEffect(() => {
     const fetchFigures = async () => {
@@ -41,18 +38,24 @@ const FigureSelector: React.FC<FigureSelectorProps> = ({ onSelectFigure }) => {
   useEffect(() => {
     if (figuresModal.length > 0) {
       setSelectedFigureIds([figuresModal[0]]);
-      const pattern = figures.find((figure) => figure.id === selectedFigureIds[0]);
-      setPattern(pattern?.pattern!)
+      const pattern = figures.find(
+        (figure) => figure.id === selectedFigureIds[0]
+      );
+      // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
+      setPattern(pattern?.pattern!);
     }
-  }, [figuresModal]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [figures, figuresModal]);
 
   const handleSelectFigures = (selectedFigureIds: number[]) => {
     setFiguresModal(selectedFigureIds);
     setSelectedFigureIds(selectedFigureIds);
 
-    const selectedFigures: Figure[] = selectedFigureIds.map((id) => {
-      return figures.find((figure) => figure.id === id)
-    }).filter((figure): figure is Figure => figure !==undefined);
+    const selectedFigures: Figure[] = selectedFigureIds
+      .map((id) => {
+        return figures.find((figure) => figure.id === id);
+      })
+      .filter((figure): figure is Figure => figure !== undefined);
 
     onSelectFigure(selectedFigures);
   };
@@ -66,71 +69,82 @@ const FigureSelector: React.FC<FigureSelectorProps> = ({ onSelectFigure }) => {
   };
 
   const handleSelectChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedIds = Array.from(event.target.selectedOptions).map(option => Number(option.value));
+    const selectedIds = Array.from(event.target.selectedOptions).map((option) =>
+      Number(option.value)
+    );
     setSelectedFigureIds(selectedIds);
   };
   const handleRowClick = (figureId: number) => {
-    const selectedFigure = figures.find(figure => figure.id === figureId);
+    const selectedFigure = figures.find((figure) => figure.id === figureId);
     if (selectedFigure) {
       setPattern(selectedFigure.pattern);
     }
-  }
+  };
   return (
     <FigureSelectorStyle>
       <div className="section figure-selector">
-        <div className="left-side" onClick={handleOpenModal}>
-          <div className="side-table">
-            <div className="table-header">
-              <h4>B</h4>
-              <h4>I</h4>
-              <h4>N</h4>
-              <h4>G</h4>
-              <h4>O</h4>
-            </div>
-            <div className="table-content">
-              {pattern.map((row: boolean[], rowIndex: number) =>
-                row.map((cell: boolean, cellIndex: number) => (
-                  <div
-                    key={`${rowIndex}-${cellIndex}`}
-                    className={`${
-                      rowIndex === 2 && cellIndex === 2
-                        ? "free"
-                        : cell
-                        ? "cell filled"
-                        : "cell"
-                    }`}
-                  >
-                    {rowIndex === 2 && cellIndex === 2 ? (
-                      <span>FREE</span>
-                    ) : cell ? (
-                      <AppIcon icon="star"></AppIcon>
-                    ) : (
-                      ""
-                    )}
-                  </div>
-                ))
-              )}
+        <span className="section-header">Figuras en juego</span>
+        <div className="selector-content">
+          <div className="left-side" onClick={handleOpenModal}>
+            <div className="side-table">
+              <div className="table-header">
+                <h4>B</h4>
+                <h4>I</h4>
+                <h4>N</h4>
+                <h4>G</h4>
+                <h4>O</h4>
+              </div>
+              <div className="table-content">
+                {pattern.map((row: boolean[], rowIndex: number) =>
+                  row.map((cell: boolean, cellIndex: number) => (
+                    <div
+                      key={`${rowIndex}-${cellIndex}`}
+                      className={`${
+                        rowIndex === 2 && cellIndex === 2
+                          ? "free"
+                          : cell
+                          ? "cell filled"
+                          : "cell"
+                      }`}
+                    >
+                      {rowIndex === 2 && cellIndex === 2 ? (
+                        <span>FREE</span>
+                      ) : cell ? (
+                        <AppIcon icon="star"></AppIcon>
+                      ) : (
+                        ""
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
           </div>
+          <select
+            multiple
+            value={selectedFigureIds.map(String)}
+            className="form-select list-figures"
+            onChange={handleSelectChange}
+          >
+            {figuresModal.map((id) => {
+              const figure = figures.find((figure) => figure.id === id);
+              return (
+                <option key={id} value={id} onClick={() => handleRowClick(id)}>
+                  {figure ? figure.name : `Figure ${id}`}
+                </option>
+              );
+            })}
+          </select>
         </div>
-        <select
-          multiple
-          value={selectedFigureIds.map(String)}
-          className="form-select list-figures"
-          onChange={handleSelectChange}
-        >
-          {figuresModal.map((id) => {
-            const figure = figures.find((figure) => figure.id === id);
-            return (
-              <option key={id} value={id} onClick={() => handleRowClick(id)}>
-                {figure ? figure.name : `Figure ${id}`}
-              </option>
-            );
-        })}
-        </select>
       </div>
-      <AppModal title="Select Figures" size="md" isOpen={isModalOpen} onClose={handleCloseModal}>
-        <FigureSelectorModal 
+
+      <AppModal
+        title="Select Figures"
+        size="md"
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+      >
+        <FigureSelectorModal
           onClose={handleCloseModal}
           figures={figures}
           selectedFigures={figuresModal}
@@ -145,11 +159,21 @@ export default FigureSelector;
 
 const FigureSelectorStyle = styled.div`
   .figure-selector {
-    box-shadow: 1px 4px 6px rgba(0, 0, 0, .4);
+    box-shadow: 1px 4px 6px rgba(0, 0, 0, 0.4);
     padding: 1rem;
-    border-radius: 8px;
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+  }
+  .section-header {
+    text-align: center;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid rgba(var(--color-light-rgb), 0.04);
+  }
+  .selector-content {
     display: flex;
     gap: 2rem;
+    margin-top: 1rem;
   }
   .left-side {
     width: 140px;
@@ -212,12 +236,12 @@ const FigureSelectorStyle = styled.div`
   }
   .list-figures {
     min-width: 140px;
-    background-color: rgba(0,0,0, .3);
+    background-color: rgba(0, 0, 0, 0.3);
     border: none;
     color: var(--color-light);
   }
   .list-figures:focus {
-    box-shadow: 0 0 4px 4px rgba(0, 0, 0, .07);
+    box-shadow: 0 0 4px 4px rgba(0, 0, 0, 0.07);
   }
   .list-figures::-webkit-scrollbar {
     width: 8px;
