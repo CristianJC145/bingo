@@ -24,6 +24,8 @@ const BingoGamePage: React.FC = () => {
   const [isGameStarted, setIsGameStarted] = useState(false);
   const [allReady, setAllReady] = useState(false);
   const [balls, setBalls] = useState<number[]>([]);
+  const [gameRandom, setGameRandom] = useState(false);
+  const [cardsRangue, setCardsRangue] = useState(false);
 
   useEffect(() => {
     if (
@@ -42,7 +44,12 @@ const BingoGamePage: React.FC = () => {
     checkForWinner(balls);
     console.log(balls);
   };
-
+  const handleGameRandom = () => {
+    setGameRandom(!gameRandom);
+  }
+  const handleCardsRangue = () => {
+    setCardsRangue(!cardsRangue);
+  }
   const handleSelectFigure = (figures: Figure[]) => {
     setSelectedFigures(figures);
   };
@@ -95,12 +102,30 @@ const BingoGamePage: React.FC = () => {
             <div className="section-header">Cartones en Juego</div>
             <div className="d-flex justify-content-center mb-4 mt-3 align-items-center gap-4">
               <div className="d-flex flex-column gap-2 align-items-center">
-                <span className="section-title">Aleatorio</span>
-                <AppButton icon="power-on"></AppButton>
-                <AppButton icon="power-off"></AppButton>
+                <div className="mt-3">
+                  <span className="section-title">Especificos</span>
+                </div>
+                <div className="d-flex gap-3">
+                  <div className="btn-action-on">
+                    <AppButton 
+                      disabled={cardsRangue}
+                      onClick={handleCardsRangue} 
+                      className={`${cardsRangue ? 'power-on selected' : 'power-on'}`} 
+                      icon="power-off">
+                    </AppButton>
+                  </div>
+                  <div className="btn-action-off">
+                    <AppButton 
+                      disabled={!cardsRangue}
+                      onClick={handleCardsRangue} 
+                      className={`${!cardsRangue ? 'power-off selected' : 'power-off'}`} 
+                      icon="power-off">
+                    </AppButton>
+                  </div>
+                </div>
               </div>
             </div>
-            <CartonRangeSelector onSelectRange={handleSelectRange} />
+            <CartonRangeSelector onCardsRangue={cardsRangue} onSelectRange={handleSelectRange} />
           </div>
           <div className="section">
             <div className="section-header">Juego</div>
@@ -129,20 +154,24 @@ const BingoGamePage: React.FC = () => {
                 <div className="d-flex gap-3">
                   <div className="btn-action-on">
                     <AppButton
-                      className="power-on"
+                      className={`${gameRandom ? 'power-on selected' : 'power-on'}`}
                       icon="power-off"
+                      onClick={handleGameRandom}
+                      disabled={gameRandom}
                     ></AppButton>
                   </div>
                   <div className="btn-action-off">
                     <AppButton
-                      className="power-off"
+                      className={`${!gameRandom ? 'power-off selected' : 'power-off'}`}
                       icon="power-off"
+                      onClick={handleGameRandom}
+                      disabled={!gameRandom}
                     ></AppButton>
                   </div>
                 </div>
               </div>
             </div>
-            <AppButton className="mt-3" disabled={!allReady} label="Random" />
+            <AppButton className={`${gameRandom ? 'mt-3' : 'mt-3 disabled'}`} disabled={!gameRandom} label="Random" />
           </div>
           <FigureSelector onSelectFigure={handleSelectFigure} />
         </div>
@@ -274,6 +303,7 @@ const BingoGamePageStyle = styled.div`
     opacity: 0.7;
   }
   .power-on {
+    opacity: .5;
     border-radius: 99px;
     background: linear-gradient(
       0deg,
@@ -284,6 +314,7 @@ const BingoGamePageStyle = styled.div`
     );
   }
   .power-off {
+    opacity: .5;
     border-radius: 99px;
     background: linear-gradient(
       0deg,
@@ -315,6 +346,17 @@ const BingoGamePageStyle = styled.div`
     color: #fff;
     background-color: rgba(0, 0, 0, 0.3);
     text-align: center;
+  }
+  .selected {
+    opacity: 1;
+  }
+  .selected:hover {
+    opacity: 1 !important;
+    cursor: unset;
+  }
+  .disabled {
+    opacity: .5;
+    cursor: unset;
   }
   @media (min-width: 768px) {
     .balls {
