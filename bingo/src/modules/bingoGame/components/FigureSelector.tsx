@@ -15,9 +15,11 @@ interface Figure {
 
 interface FigureSelectorProps {
   onSelectFigure: (figures: Figure[]) => void;
+  gameReset: boolean;
 }
 
-const FigureSelector: React.FC<FigureSelectorProps> = ({ onSelectFigure }) => {
+const FigureSelector: React.FC<FigureSelectorProps> = ({ onSelectFigure, gameReset }) => {
+  console.log("resetear:", gameReset);
   const [pattern, setPattern] = useState<boolean[][]>(
     Array(5).fill(Array(5).fill(false))
   );
@@ -46,6 +48,14 @@ const FigureSelector: React.FC<FigureSelectorProps> = ({ onSelectFigure }) => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [figures, figuresModal]);
+  useEffect(() => {
+    if (gameReset) {
+      console.log("resetear");
+      setSelectedFigureIds([]);
+      setFiguresModal([]);
+      setPattern(Array(5).fill(Array(5).fill(false)));
+    }
+  },[gameReset]);
 
   const handleSelectFigures = (selectedFigureIds: number[]) => {
     setFiguresModal(selectedFigureIds);

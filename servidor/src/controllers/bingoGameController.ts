@@ -29,6 +29,8 @@ const checkFigureMatch = (card: number[][], figure: any, balls: number[]): boole
   
 export const checkWinner = async (req: Request, res: Response) => {
   const { balls, figures, range }: CheckWinnerRequest = req.body;
+  console.log("rango seleccionado: ", req.body)
+
   try {
     const [cartons]: [BingoCard[], any] = await db.query('SELECT * FROM bingoCards WHERE id BETWEEN ? AND ?', [range.start, range.end]);
 
@@ -41,7 +43,6 @@ export const checkWinner = async (req: Request, res: Response) => {
         if (checkFigureMatch(cardPattern, figurePattern, balls)) {
           winner= true;
           winningCards.push(carton.id);
-          console.log("cartones ganadores: ",winningCards)
           break;
         }
       }

@@ -1,14 +1,26 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import { settings } from "../../../../src/shared/constant/settings.constants";
 
 interface BallPanelProps {
   onSelectBall: (balls: number[]) => void;
-  allReady: boolean;
+  onRandomBall?: number[];
+  isActivePanel: boolean;
+  gameReset: boolean;
 }
 
-const BallPanel: React.FC<BallPanelProps> = ({ onSelectBall, allReady }) => {
+const BallPanel: React.FC<BallPanelProps> = ({ onSelectBall, isActivePanel, onRandomBall, gameReset }) => {
   const [selectedBalls, setSelectedBalls] = useState<number[]>([]);
+  useEffect (()=> {
+    if (onRandomBall) {
+      const ballsToAdd = Array.isArray(onRandomBall) ? onRandomBall : [onRandomBall];
+      const updatedBallsSet = new Set([...selectedBalls, ...ballsToAdd]);
+      setSelectedBalls(Array.from(updatedBallsSet));
+    }
+    if (gameReset) {
+      setSelectedBalls([]);
+    }
+  },[onRandomBall, isActivePanel, gameReset])
   const playSound = (ballNumber: number) => {
     const audio = new Audio(
       `${settings.appSounds}/sounds/ball/${ballNumber}.mp3`
@@ -24,7 +36,7 @@ const BallPanel: React.FC<BallPanelProps> = ({ onSelectBall, allReady }) => {
     onSelectBall(updatedBalls);
     playSound(ball);
   };
-
+  
   return (
     <BallPanelStyle className="w-100">
       <div className="ball-panel">
@@ -42,7 +54,7 @@ const BallPanel: React.FC<BallPanelProps> = ({ onSelectBall, allReady }) => {
               <button
                 key={`ball-${index}`}
                 onClick={() => handleBallClick(ball)}
-                disabled={!allReady}
+                disabled={isActivePanel}
                 className={
                   selectedBalls.includes(ball) ? "ball selected" : "ball"
                 }

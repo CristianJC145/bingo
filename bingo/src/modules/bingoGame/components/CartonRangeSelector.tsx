@@ -1,21 +1,33 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 
 interface CartonRangeSelectorProps {
-  onSelectRange: (range: { start: number; end: number }) => void;
+  onSelectRange: (range: {start?: number, end?: number, specific?: number[]}) => void;
   onCardsRangue: boolean;
+  gameReset: boolean;
 }
 
-const CartonRangeSelector: React.FC<CartonRangeSelectorProps> = ({ onSelectRange, onCardsRangue }) => {
+const CartonRangeSelector: React.FC<CartonRangeSelectorProps> = ({ onSelectRange, onCardsRangue, gameReset }) => {
   const [start, setStart] = useState<number | ''>('');
   const [end, setEnd] = useState<number | ''>('');
+  const [manualCartons, setManualCartons] = useState<string>('');
 
   const handleRangeChange = () => {
     if (typeof start === 'number' && typeof end === 'number') {
-      onSelectRange({ start, end });
+      onSelectRange({start, end });
     }
   };
-
+  const handleManualCartonsChange = () => {
+    const cartons = manualCartons.split(' ').map(Number).filter(num => !isNaN(num));
+    onSelectRange({specific: cartons});
+  };
+  useEffect(()=> {
+    if (gameReset) {
+      console.log("reseteado");
+      setStart('');
+      setEnd('');
+    }
+  },[gameReset])
   return (
     <CartonRangeSelectorStyle>
       {!onCardsRangue ? (
@@ -38,7 +50,13 @@ const CartonRangeSelector: React.FC<CartonRangeSelectorProps> = ({ onSelectRange
           />
         </div>
       ) : (
-        <textarea placeholder='Juegan' className='selector-manual'></textarea>
+        <textarea 
+          value={manualCartons}  
+          placeholder='Juegan' 
+          className='selector-manual'
+          onChange={(e) => setManualCartons(e.target.value)} 
+          onBlur={handleManualCartonsChange}
+        ></textarea>
       )}
     </CartonRangeSelectorStyle>
   );
