@@ -7,6 +7,7 @@ import { CheckWinnerService } from "../services/checkWinner.service";
 import { toast } from "react-toastify";
 import styled from "styled-components";
 import { getValidNumbers } from "../logic/getValidNumers";
+import GameStats from "../components/GameStats";
 
 const checkWinnerService = new CheckWinnerService();
 
@@ -64,9 +65,7 @@ const BingoGamePage: React.FC = () => {
   };
 
   const handleSelectRange = (range: {start?: number, end?: number, specific?: number[]}) => {
-    if (cardsRangue) {
-      setCartonRange(range);
-    }
+    setCartonRange(range);
     setGameReset(false);
   };
   const handleStartOrFinishGame = () => {
@@ -121,9 +120,10 @@ const BingoGamePage: React.FC = () => {
 
   return (
     <BingoGamePageStyle>
+      <GameStats isGameStarted={isGameStarted} balls={balls}></GameStats>
       <div className="bingo-game">
         <div className="game-mainSection">
-          <BallPanel gameReset={gameReset} isActivePanel={gameRandom} onSelectBall={handleSelectBall} onRandomBall={drawnNumbers}/>
+          <BallPanel gameReset={gameReset} isActivePanel={isGameStarted ? gameRandom ? true : false : true} onSelectBall={handleSelectBall} onRandomBall={drawnNumbers}/>
         </div>
         <div className="d-flex justify-content-between flex-sm-row flex-column">
           <div className="section balls">

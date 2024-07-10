@@ -18,12 +18,11 @@ const CartonRangeSelector: React.FC<CartonRangeSelectorProps> = ({ onSelectRange
     }
   };
   const handleManualCartonsChange = () => {
-    const cartons = manualCartons.split(' ').map(Number).filter(num => !isNaN(num));
+    const cartons = manualCartons.split(/[\s\n]+/).map(Number).filter(num => !isNaN(num));
     onSelectRange({specific: cartons});
   };
   useEffect(()=> {
     if (gameReset) {
-      console.log("reseteado");
       setStart('');
       setEnd('');
     }

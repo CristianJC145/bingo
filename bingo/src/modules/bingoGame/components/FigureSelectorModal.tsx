@@ -35,7 +35,6 @@ const FigureSelectorModal: React.FC<FigureSelectorModalProps> = ({ onClose, figu
       setPattern(figure.pattern);
     };
     useEffect(() => {
-      console.log("figuras locales",localSelectedFigures);
       setLocalSelectedFigures(selectedFigures);
     },[selectedFigures]);
     return (

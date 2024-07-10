@@ -77,15 +77,15 @@ const BallPanelStyle = styled.div`
     grid-template-columns: repeat(15, 1fr);
     margin: auto;
     justify-items: center;
-    row-gap: 1rem;
+    row-gap: .5rem
   }
   .ball-container {
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: 999px;
-    width: 45px;
-    height: 45px;
+    width: 40px;
+    height: 40px;
   }
   .ball-container.selected {
     background: linear-gradient(
@@ -103,8 +103,8 @@ const BallPanelStyle = styled.div`
   }
   .ball {
     position: relative;
-    width: 40px;
-    height: 40px;
+    width: 35px;
+    height: 35px;
     border-radius: 900px;
     background: radial-gradient(
       circle at 70% 10%,
@@ -114,7 +114,7 @@ const BallPanelStyle = styled.div`
       #2d0f4b8a 90%
     );
     color: var(--color-body);
-    font-size: 1.25rem;
+    font-size: 1.125rem;
     font-weight: 700;
     border: none;
     overflow: hidden;

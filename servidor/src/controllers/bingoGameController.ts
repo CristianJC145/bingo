@@ -4,6 +4,7 @@ import { CheckWinnerRequest } from "../models/FigureCards";
 import { RowDataPacket } from 'mysql2/promise';
 import { Server as WebSocketServer } from 'ws';
 import { wss } from "..";
+import { error } from "console";
 
 interface BingoCard extends RowDataPacket {
     id: number;
@@ -26,14 +27,28 @@ const checkFigureMatch = (card: number[][], figure: any, balls: number[]): boole
   }
   return true;
 };
+
+const getBingoCards = async(range: {start?: number; end?: number; specific?: number[]}) => {
+  let cartons: BingoCard[];
+  if (range.specific &&  range.specific.length > 0) {
+    const placeholders = range.specific.map(() => '?').join(',');
+    const [results]: [BingoCard[], any] = await db.query(`SELECT * FROM bingoCards WHERE id IN (${placeholders})`, range.specific);
+    cartons = results;
+  } else if (range.start !== undefined && range.end !== undefined) {
+    const [results]: [BingoCard[], any] = await db.query('SELECT * FROM bingoCards WHERE id BETWEEN ? AND ?', [range.start, range.end]);
+    cartons = results;
+  } else {
+    throw new Error('Invalid range specified');
+  }
+  return cartons;
+}
   
 export const checkWinner = async (req: Request, res: Response) => {
   const { balls, figures, range }: CheckWinnerRequest = req.body;
   console.log("rango seleccionado: ", req.body)
 
   try {
-    const [cartons]: [BingoCard[], any] = await db.query('SELECT * FROM bingoCards WHERE id BETWEEN ? AND ?', [range.start, range.end]);
-
+    const cartons = await getBingoCards(range);
     let winner = false;
     let winningCards = [];
     for (const carton of cartons) {

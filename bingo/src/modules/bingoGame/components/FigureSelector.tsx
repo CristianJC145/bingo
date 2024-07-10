@@ -19,7 +19,6 @@ interface FigureSelectorProps {
 }
 
 const FigureSelector: React.FC<FigureSelectorProps> = ({ onSelectFigure, gameReset }) => {
-  console.log("resetear:", gameReset);
   const [pattern, setPattern] = useState<boolean[][]>(
     Array(5).fill(Array(5).fill(false))
   );
@@ -50,7 +49,6 @@ const FigureSelector: React.FC<FigureSelectorProps> = ({ onSelectFigure, gameRes
   }, [figures, figuresModal]);
   useEffect(() => {
     if (gameReset) {
-      console.log("resetear");
       setSelectedFigureIds([]);
       setFiguresModal([]);
       setPattern(Array(5).fill(Array(5).fill(false)));
