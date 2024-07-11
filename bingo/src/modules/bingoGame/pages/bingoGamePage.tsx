@@ -224,6 +224,11 @@ const BingoGamePageStyle = styled.div`
   .bingo-game {
     max-width: 1500px;
     margin: 0 auto;
+    padding: var(--p-6) var(--p-6);
+    border-radius: 12px;
+    background-color: #1e1d49;
+    box-shadow: 1px 1px 3px rgba(255, 255, 255, 0.05),
+      2px 1px 7px 3px rgba(0, 0, 0, 0.05);
   }
   .game-mainSection {
     display: flex;
