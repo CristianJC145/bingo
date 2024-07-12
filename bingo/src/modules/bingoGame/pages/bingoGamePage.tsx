@@ -8,6 +8,8 @@ import { toast } from "react-toastify";
 import styled from "styled-components";
 import { getValidNumbers } from "../logic/getValidNumers";
 import GameStats from "../components/GameStats";
+import AppModal from "../../../shared/components/AppModal";
+import WinnerModal from "../components/WinnerModal";
 
 const checkWinnerService = new CheckWinnerService();
 
@@ -31,6 +33,8 @@ const BingoGamePage: React.FC = () => {
   const [drawnNumbers, setDrawnNumbers] = useState<number[]>([]);
   const [cardsRangue, setCardsRangue] = useState(false);
   const [gameReset, setGameReset] = useState(false);
+  const [isWinner, setIsWinner] = useState(false);
+  const [winner, setWinner] = useState<number[]>([]);
 
   useEffect(() => {
     if (
@@ -114,9 +118,14 @@ const BingoGamePage: React.FC = () => {
     const { winner, winningCards } = response;
 
     if (winner) {
-      toast.success(`¡Hay un ganador! Cartón: ${winningCards}`);
+      setIsWinner(!isWinner);
+      setWinner(winningCards);
     }
   };
+  
+  const handleCloseModal = () => {
+    setIsWinner(!isWinner);
+  }
 
   return (
     <BingoGamePageStyle>
@@ -214,6 +223,9 @@ const BingoGamePage: React.FC = () => {
           <FigureSelector gameReset={gameReset} onSelectFigure={handleSelectFigure} />
         </div>
       </div>
+      <AppModal title="¡BINGO!" isOpen={isWinner} onClose={handleCloseModal}>
+        <WinnerModal onClose={handleCloseModal} winnerCards={winner}></WinnerModal>
+      </AppModal>
     </BingoGamePageStyle>
   );
 };

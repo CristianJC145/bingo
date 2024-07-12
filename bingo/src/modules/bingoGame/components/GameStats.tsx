@@ -35,21 +35,20 @@ const GameStats: React.FC<GameStatsProps> = ({ balls, isGameStarted }) => {
     <GameStatsStyle>
         <div className="bingo-header">
           <div className="header-content">
-              <div>
+              <div className='d-flex flex-column align-items-center gap-2 justify-content-center'>
                 <span>Control de Tiempo</span>
                 <div className='box time'>{formatTime(gameTime)}</div>
               </div>
-              <div>
-                <span>Control de Tiempo</span>
+              <div className='content-balls-played'>
+                <small className='balls-played-title'>Balotas Jugadas</small>
                 <div className="number-balls">
                     <h4 className="balls-total">{balls.length}</h4>
                 </div>  
               </div>
-              <div>
+              <div className='d-flex flex-column align-items-center gap-2 justify-content-center'>
                 <div>Últimas Balotas Cantadas</div>
                 <div className="d-flex gap-2">
                     {displayBalls.map((ball, index) => (
-                      console.log("balotas:", displayBalls),
                       <div key={index} className='ball'>
                         {ball === -1 ? '-' : ball}
                       </div>
@@ -65,8 +64,10 @@ const GameStats: React.FC<GameStatsProps> = ({ balls, isGameStarted }) => {
 export default GameStats;
 const GameStatsStyle = styled.div`
   .bingo-header {
-    border-radius: 8px;
+    border-radius: 12px;
     margin-bottom: 1rem;
+    max-width: 1500px;
+    margin: 1rem auto;
   }
   .header-title {
     color: rgba(var(--color-light-rgb), .6);
@@ -80,12 +81,46 @@ const GameStatsStyle = styled.div`
     display: flex;
     padding: 0 var(--p-6);
     justify-content: space-between;
-    align-items: center;
     background-color: #1e1d49;
     border-radius: 8px;
     color: var(--color-light);
-    height: 120px;
-    overflow: hidden  ;
+    height: 90px;
+  }
+  .content-balls-played {
+    display: flex;
+    position: relative;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
+    background: linear-gradient(110deg, #15143c 0%, rgba(0,0,0,0.05) 100%);
+    width: 350px;
+  }
+  .balls-played-title {
+    position: absolute;
+    top: -25px;
+    z-index: 3;
+    margin-top: .325rem;
+    font-size: .825rem;
+  }
+  .content-balls-played::after {
+    content: "";
+    position: absolute;
+    right: 0;
+    width: 0;
+    height: 0;
+    border-left: 50px solid transparent;
+    border-right: 50px solid #1e1d49;
+    border-bottom: 90px solid transparent;
+  }
+  .content-balls-played::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    width: 0;
+    height: 0;
+    border-right: 50px solid transparent;
+    border-top: 90px solid #1e1d49;
   }
   .box {
     display: flex;
@@ -95,7 +130,7 @@ const GameStatsStyle = styled.div`
   }
   .time {
     border-radius: 4px;
-    padding: 0 var(--p-2);
+    padding: 0 var(--p-5);
     font-size: 1.5rem;
     font-weight: 700;
     border-image: conic-gradient(rgba(135, 123, 255, 1) 0%, rgb(44, 42, 99) 80%, rgba(96, 86, 238, 1) 100%) 2;
@@ -105,31 +140,9 @@ const GameStatsStyle = styled.div`
     position: relative;
     justify-content: center;
     align-items: center;
-    width: 50px;
-    height: 50px;
+    width: 70px;
+    height: 70px;
     border-radius: 999px;
-  }
-  .number-balls::before {
-    content: "";
-    position: absolute;
-    top: -7px;
-    bottom: -7px;
-    left: -7px;
-    right: -7px;
-    border-radius: 999px;
-    border-bottom: 2px solid rgba(var(--color-light-rgb), .15);
-    background: linear-gradient(0deg, rgba(80, 103, 218, 0.5) 50%, rgba(25, 66, 113, 0.5) 90%, rgba(0, 0, 0, 0));
-    z-index: 2;
-  }
-  .number-balls::after {
-    content: "";
-    position: absolute;
-    top: -15px;
-    bottom: -15px;
-    left: -15px;
-    right: -15px;
-    border-radius: 999px;
-    background: linear-gradient(0deg, rgba(80, 103, 218, 0.3) 50%, rgba(25, 66, 113, 0.3) 90%, rgba(0, 0, 0, 0));
   }
 
   .balls-total {
@@ -143,12 +156,12 @@ const GameStatsStyle = styled.div`
     margin: 0;
     justify-content: center;
     align-items: center;
-    background: linear-gradient(0deg, #5068da 60%, rgba(0, 0, 0, 0) 100%);
-    border-radius: 999px;
-    box-shadow: inset 0 -1px 1px rgba(var(--color-light-rgb), .5);
-    z-index: 3;
+    background: radial-gradient(circle at 70% 10%, #ffffff, #6056ee 25%, #1d1c48 60%, #2d0f4b8a 90%);    border-radius: 999px;
+    border: 3px solid rgb(119 183 206);
+    box-shadow: 0 -1px 8px 3px rgb(99, 96, 255);
+    z-index: 3; 
   }
-  .ball {
+  .ball { 
     display: flex;
     align-items: center;
     justify-content: center;

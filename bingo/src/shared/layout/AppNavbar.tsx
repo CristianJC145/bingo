@@ -165,6 +165,7 @@ const AppNavbarStyle = styled.div`
   .vs-right-nav {
     display: flex;
     align-items: center;
+    padding-right: var(--p-5);
     gap: 1.5rem;
   }
   .vs-navbar-profile {
@@ -189,16 +190,18 @@ const AppNavbarStyle = styled.div`
     margin-bottom: 0.5rem;
   }
   .vs-profile-img {
-    height: 30px;
-    width: 30px;
+    height: 35px;
+    width: 35px;
     object-fit: cover;
     border-radius: 999px;
   }
   .vs-profile-btn {
-    background-color: #fff;
+    background: linear-gradient(130deg, #2c2a63, #3e3a83);
     border: 2px solid rgba(var(--color-gray-400-rgb), 0.075);
     border-radius: 999px;
-    padding: 0.225rem;
+    width: 45px;
+    height: 45px;
+    padding: 0;
   }
   .vs-profile-btn:hover {
     background-color: rgba(var(--color-gray-400-rgb), 0.03);
@@ -221,6 +224,7 @@ const AppNavbarStyle = styled.div`
   @media (min-width: 1200px) {
     .vs-AppNavbar {
       padding-left: var(--p-8);
+      padding-right: var(--p-8);
     }
   }
 `;
