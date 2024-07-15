@@ -16,6 +16,7 @@ export interface ButtonProps {
     icon?: React.ReactNode;
     outlined?: boolean;
     onClick?: () => void;
-    params?: any;
+    params?: unknown;
     disabled?: boolean;
+    id?: string;
 }

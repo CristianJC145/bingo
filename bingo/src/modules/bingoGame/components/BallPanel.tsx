@@ -9,26 +9,55 @@ interface BallPanelProps {
   gameReset: boolean;
 }
 
-const BallPanel: React.FC<BallPanelProps> = ({ onSelectBall, isActivePanel, onRandomBall, gameReset }) => {
+const BallPanel: React.FC<BallPanelProps> = ({
+  onSelectBall,
+  isActivePanel,
+  onRandomBall,
+  gameReset,
+}) => {
   const [selectedBalls, setSelectedBalls] = useState<number[]>([]);
-  useEffect (()=> {
-    if (onRandomBall) {
-      const ballsToAdd = Array.isArray(onRandomBall) ? onRandomBall : [onRandomBall];
+  const [userInteracted, setUserInteracted] = useState<boolean>(false);
+  const playSound = (ballNumber: number) => {
+    const audio = new Audio(
+      `${settings.appSounds}/sounds/ball/NUM${ballNumber}.wav`
+    );
+    audio.play();
+  };
+  useEffect(() => {
+    if (onRandomBall && userInteracted && gameReset === false) {
+      const ballsToAdd = Array.isArray(onRandomBall)
+        ? onRandomBall
+        : [onRandomBall];
       const updatedBallsSet = new Set([...selectedBalls, ...ballsToAdd]);
-      setSelectedBalls(Array.from(updatedBallsSet));
+      const updatedBallsArray = Array.from(updatedBallsSet);
+      setSelectedBalls(updatedBallsArray);
+      playSound(updatedBallsArray[updatedBallsArray.length - 1]);
     }
     if (gameReset) {
       setSelectedBalls([]);
     }
-  },[onRandomBall, isActivePanel, gameReset])
-  const playSound = (ballNumber: number) => {
-    const audio = new Audio(
-      `${settings.appSounds}/sounds/ball/${ballNumber}.mp3`
-    );
-    audio.play();
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onRandomBall, isActivePanel, gameReset]);
+
+  useEffect(() => {
+    const handleUserInteraction = () => setUserInteracted(true);
+    const randomBallButton = document.getElementById("btn-game-random");
+
+    if (randomBallButton) {
+      randomBallButton.addEventListener("click", handleUserInteraction, {
+        once: true,
+      });
+    }
+
+    return () => {
+      if (randomBallButton) {
+        randomBallButton.removeEventListener("click", handleUserInteraction);
+      }
+    };
+  }, []);
 
   const handleBallClick = (ball: number) => {
+    setUserInteracted(true);
     const updatedBalls = selectedBalls.includes(ball)
       ? selectedBalls.filter((b) => b !== ball)
       : [...selectedBalls, ball];
@@ -36,7 +65,7 @@ const BallPanel: React.FC<BallPanelProps> = ({ onSelectBall, isActivePanel, onRa
     onSelectBall(updatedBalls);
     playSound(ball);
   };
-  
+
   return (
     <BallPanelStyle className="w-100">
       <div className="ball-panel">
@@ -77,7 +106,7 @@ const BallPanelStyle = styled.div`
     grid-template-columns: repeat(15, 1fr);
     margin: auto;
     justify-items: center;
-    row-gap: .5rem
+    row-gap: 0.5rem;
   }
   .ball-container {
     display: flex;

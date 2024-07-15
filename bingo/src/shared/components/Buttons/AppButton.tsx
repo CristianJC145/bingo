@@ -19,6 +19,7 @@ const AppButton: React.FC<ButtonProps> = ({
   children,
   subvariant,
   disabled,
+  id,
 }) => {
   const baseClassName = "vs-btn";
   const variantClassName = `vs-btn--${variant ?? "primary"}`;
@@ -95,6 +96,7 @@ const AppButton: React.FC<ButtonProps> = ({
           onClick={onClick}
           aria-label={ariaLabel}
           disabled={disabled}
+          id={id}
         >
           {label}
           {icon && <AppIcon icon={icon}></AppIcon>}
@@ -123,6 +125,7 @@ const AppButton: React.FC<ButtonProps> = ({
         className={classNames}
         aria-label={ariaLabel}
         disabled={disabled}
+        id={id}
       >
         {label}
         {icon && <AppIcon icon={icon}></AppIcon>}
