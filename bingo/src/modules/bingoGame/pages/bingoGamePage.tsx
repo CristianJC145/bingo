@@ -259,12 +259,11 @@ const BingoGamePage: React.FC = () => {
           />
         </div>
       </div>
-      <AppModal title="¡BINGO!" isOpen={isWinner} onClose={handleCloseModal}>
         <WinnerModal
           onClose={handleCloseModal}
           winnerCards={winner}
+          isOpen={isWinner}
         ></WinnerModal>
-      </AppModal>
     </BingoGamePageStyle>
   );
 };
