@@ -68,7 +68,8 @@ import {
     faSliders,
     faPlay,
     faRotate,
-    faPowerOff
+    faPowerOff,
+    faTrophy,
 } from '@fortawesome/free-solid-svg-icons';
 
 library.add(
@@ -136,5 +137,6 @@ library.add(
     faSliders,
     faPlay,
     faRotate,
-    faPowerOff
+    faPowerOff,
+    faTrophy
     );

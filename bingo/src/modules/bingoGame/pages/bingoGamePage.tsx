@@ -10,6 +10,7 @@ import { getValidNumbers } from "../logic/getValidNumers";
 import GameStats from "../components/GameStats";
 import AppModal from "../../../shared/components/AppModal";
 import WinnerModal from "../components/WinnerModal";
+import AppIcon from "../../../shared/components/AppIcon";
 
 const checkWinnerService = new CheckWinnerService();
 
@@ -88,6 +89,7 @@ const BingoGamePage: React.FC = () => {
       setSelectedFigures([]);
       setIsGameStarted(false);
       setGameReset(true);
+      setWinner([])
     }
   };
   const drawNumber = () => {
@@ -253,10 +255,23 @@ const BingoGamePage: React.FC = () => {
               label="Random"
             />
           </div>
-          <FigureSelector
-            gameReset={gameReset}
-            onSelectFigure={handleSelectFigure}
-          />
+          <div className="d-flex flex-column gap-3 align-items-center">
+            <FigureSelector
+              gameReset={gameReset}
+              onSelectFigure={handleSelectFigure}
+            />
+            {winner.length > 0 && (
+              <div className="section winner">
+                <div className="section-winner">
+                  <AppIcon className="icon-winners" icon="trophy"></AppIcon>
+                  <span>Lista de ganadores</span>
+                  <div className="badge-winners">
+                    {winner.length > 1 ? `${winner.length} cartones`: `${winner.length} carton`}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
         <WinnerModal
@@ -450,6 +465,29 @@ const BingoGamePageStyle = styled.div`
   .disabled {
     opacity: 0.5 !important;
     cursor: unset;
+  }
+  .winner {
+    width: 100%;
+  }
+  .section-winner {
+    display: flex;
+    padding: 0 var(--p-4);
+    justify-content: space-between;
+    align-items: center;
+  }
+  .section.winner:hover {
+    cursor: pointer;
+  }
+  .badge-winners {
+    display: inline-block;
+    padding: var(--p-1) var(--p-6);
+    background-color: #1d1c48;
+    border-radius: 12px;
+    font-size: small;
+    font-weight: 700;
+  }
+  .icon-winners {
+    font-size: 1.125rem;
   }
   @media (min-width: 768px) {
     .balls {
