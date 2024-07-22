@@ -43,8 +43,16 @@ const BingoGamePage: React.FC = () => {
   const [winner, setWinner] = useState<Card[]>([]);
   const [isOpenWinnerModal, setIsOpenWinnerModal] = useState(false);
 
+  const hasCartonRangeData = () => {
+    const { start, end, specific } = cartonRange;
+    const isStartEndValid = typeof start === 'number' && start !== 0 && typeof end === 'number' && end !== 0;
+    const isSpecificValid = Array.isArray(specific) && specific.length > 0;
+
+    return isStartEndValid || isSpecificValid;
+  };
+
   useEffect(() => {
-    if (selectedFigures.length > 0 && cartonRange !== undefined) {
+    if (selectedFigures.length > 0 && hasCartonRangeData()) {
       setAllReady(true);
     } else {
       setAllReady(false);

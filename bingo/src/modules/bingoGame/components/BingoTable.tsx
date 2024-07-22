@@ -63,7 +63,7 @@ const BingoTableStlye = styled.div`
     justify-content: center;
     color: #fff;
     font-weight: 700;
-    font-size: 9px;
+    font-size: .875rem;
   }
   .cell {
     background-color: var(--color-body);
@@ -73,6 +73,7 @@ const BingoTableStlye = styled.div`
     width: 50px;
     height: 50px;
     margin: 0.1rem;
+    font-weight: 700;
   }
   .cell.filled {
     display: flex;

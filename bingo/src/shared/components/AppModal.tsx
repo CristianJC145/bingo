@@ -48,7 +48,7 @@ const AppModalStyle = styled.div`
       z-index: 1000;
   }
   .modal-container {
-    background: white;
+    background: linear-gradient(130deg, #2c2a63, #3e3a83);
     max-width: 450px;
     border-radius: 16px;
   }
@@ -71,7 +71,7 @@ const AppModalStyle = styled.div`
       width: 25px;
       height: 25px;
       font-size: 1.5rem;
-      color: var(--color-gray-300);      
+      color: var(--color-light);      
       border: none;
       background-color: unset;
       cursor: pointer;
@@ -85,6 +85,7 @@ const AppModalStyle = styled.div`
     width: 100%;
     border-bottom: 1px solid rgba(var(--color-gray-300-rgb), .2);
     padding: 1rem 2rem;
+    color: var(--color-light);
   }
 
 `
