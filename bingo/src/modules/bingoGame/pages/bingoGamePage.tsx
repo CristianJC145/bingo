@@ -8,9 +8,9 @@ import { toast } from "react-toastify";
 import styled from "styled-components";
 import { getValidNumbers } from "../logic/getValidNumers";
 import GameStats from "../components/GameStats";
-import AppModal from "../../../shared/components/AppModal";
 import WinnerModal from "../components/WinnerModal";
 import AppIcon from "../../../shared/components/AppIcon";
+import ListWinnerModal from "../components/ListWinnersModal";
 
 const checkWinnerService = new CheckWinnerService();
 
@@ -18,6 +18,11 @@ interface Figure {
   id: number;
   name: string;
   pattern: boolean[][];
+}
+
+interface Card {
+  id: number;
+  pattern: number[][];
 }
 
 const BingoGamePage: React.FC = () => {
@@ -35,7 +40,8 @@ const BingoGamePage: React.FC = () => {
   const [cardsRangue, setCardsRangue] = useState(false);
   const [gameReset, setGameReset] = useState(false);
   const [isWinner, setIsWinner] = useState(false);
-  const [winner, setWinner] = useState<number[]>([]);
+  const [winner, setWinner] = useState<Card[]>([]);
+  const [isOpenWinnerModal, setIsOpenWinnerModal] = useState(false);
 
   useEffect(() => {
     if (selectedFigures.length > 0 && cartonRange !== undefined) {
@@ -51,6 +57,7 @@ const BingoGamePage: React.FC = () => {
       setBalls(Array.from(updateBallSet));
       checkForWinner(Array.from(updateBallSet));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [drawnNumbers]);
 
   const handleSelectBall = (balls: number[]) => {
@@ -66,7 +73,16 @@ const BingoGamePage: React.FC = () => {
   const handleSelectFigure = (figures: Figure[]) => {
     setSelectedFigures(figures);
   };
-
+  const handleCloseModal = (type: string) => {
+    if (type === "winner") {
+      setIsWinner(!isWinner);
+    } else if (type === "listWinner") {
+      setIsOpenWinnerModal(!isOpenWinnerModal);
+    }
+  };
+  const handleListWinnerModal = () => {
+    setIsOpenWinnerModal(!isOpenWinnerModal);
+  };
   const handleSelectRange = (range: {
     start?: number;
     end?: number;
@@ -89,7 +105,7 @@ const BingoGamePage: React.FC = () => {
       setSelectedFigures([]);
       setIsGameStarted(false);
       setGameReset(true);
-      setWinner([])
+      setWinner([]);
     }
   };
   const drawNumber = () => {
@@ -127,10 +143,6 @@ const BingoGamePage: React.FC = () => {
       setIsWinner(!isWinner);
       setWinner(winningCards);
     }
-  };
-
-  const handleCloseModal = () => {
-    setIsWinner(!isWinner);
   };
 
   return (
@@ -261,12 +273,14 @@ const BingoGamePage: React.FC = () => {
               onSelectFigure={handleSelectFigure}
             />
             {winner.length > 0 && (
-              <div className="section winner">
+              <div className="section winner" onClick={handleListWinnerModal}>
                 <div className="section-winner">
                   <AppIcon className="icon-winners" icon="trophy"></AppIcon>
                   <span>Lista de ganadores</span>
                   <div className="badge-winners">
-                    {winner.length > 1 ? `${winner.length} cartones`: `${winner.length} carton`}
+                    {winner.length > 1
+                      ? `${winner.length} cartones`
+                      : `${winner.length} carton`}
                   </div>
                 </div>
               </div>
@@ -274,11 +288,18 @@ const BingoGamePage: React.FC = () => {
           </div>
         </div>
       </div>
-        <WinnerModal
-          onClose={handleCloseModal}
-          winnerCards={winner}
-          isOpen={isWinner}
-        ></WinnerModal>
+      <WinnerModal
+        onClose={() => handleCloseModal("winner")}
+        winnerCards={winner}
+        isOpen={isWinner}
+      ></WinnerModal>
+      {isOpenWinnerModal && (
+        <ListWinnerModal
+          isOpen={isOpenWinnerModal}
+          onClose={() => handleCloseModal("listWinner")}
+          winner={winner}
+        ></ListWinnerModal>
+      )}
     </BingoGamePageStyle>
   );
 };

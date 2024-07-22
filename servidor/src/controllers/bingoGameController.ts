@@ -57,7 +57,10 @@ export const checkWinner = async (req: Request, res: Response) => {
         const figurePattern = figure.pattern;
         if (checkFigureMatch(cardPattern, figurePattern, balls)) {
           winner= true;
-          winningCards.push(carton.id);
+          winningCards.push({
+            id: carton.id,
+            pattern: carton.card
+          })
           break;
         }
       }
