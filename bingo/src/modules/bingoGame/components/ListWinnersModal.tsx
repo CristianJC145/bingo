@@ -1,7 +1,7 @@
 import styled from "styled-components";
 import AppModal from "../../../shared/components/AppModal";
 import BingoTable from "./BingoTable";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 interface Card {
   id: number;
@@ -12,11 +12,13 @@ interface ListWinnerModalProps {
   isOpen: boolean;
   onClose: () => void;
   winner: Card[];
+  drawNumbers: number[];
 }
 const ListWinnerModal: React.FC<ListWinnerModalProps> = ({
   isOpen,
   onClose,
   winner,
+  drawNumbers
 }) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const data: Card[] = winner.map((win: any) => ({
@@ -32,8 +34,8 @@ const ListWinnerModal: React.FC<ListWinnerModalProps> = ({
   };
   return (
     <ListWinnerModalStyle>
-      <AppModal title="Lista de Ganadores" isOpen={isOpen} onClose={onClose}>
-        <div className="d-flex flex-row gap-2">
+      <AppModal size="md" title="Lista de Ganadores" isOpen={isOpen} onClose={onClose}>
+        <div className="d-flex flex-row gap-3">
           <div className="section-numbers">
             {data.map((win) => (
               <div
@@ -45,7 +47,7 @@ const ListWinnerModal: React.FC<ListWinnerModalProps> = ({
               </div>
             ))}
           </div>
-          <BingoTable pattern={pattern}></BingoTable>
+          <BingoTable pattern={pattern} drawnNumbers={drawNumbers}></BingoTable>
         </div>
       </AppModal>
     </ListWinnerModalStyle>
@@ -57,9 +59,9 @@ const ListWinnerModalStyle = styled.div`
   .section-numbers {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
-    height: 250px;
-    width: 200px;
+    gap: .5rem;
+    height: 325px;
+    width: 150px;
     overflow-y: auto;
   }
   .number-winners {
@@ -73,7 +75,7 @@ const ListWinnerModalStyle = styled.div`
     color: var(--color-light);;
     margin-right: .5rem;
     cursor: pointer;
-    opacity: .5;
+    opacity: .3;
   }
   .number-winners:hover {
     background-color: #15143c;
@@ -85,11 +87,11 @@ const ListWinnerModalStyle = styled.div`
     width: 7px;
   }
   .section-numbers::-webkit-scrollbar-track {
-    background-color: #9a98d1;
+    background: rgba(0, 0, 0, 0.5);
     border-radius: 4px;
   }
   .section-numbers::-webkit-scrollbar-thumb {
     border-radius: 4px;
-    background: rgba(0, 0, 0, 0.5);
+    background-color: #9a98d1;
   }
 `;

@@ -3,9 +3,11 @@ import styled from "styled-components";
 
 interface BingoTableProps {
   pattern: number[][];
+  drawnNumbers: number[];
 }
 
-const BingoTable: React.FC<BingoTableProps> = ({ pattern }) => {
+const BingoTable: React.FC<BingoTableProps> = ({ pattern, drawnNumbers }) => {
+  console.log("numeros que han saluido: ",drawnNumbers);
   const [patternWinner, setPatternWinner] = useState<number[][]>(pattern);
 
   const transposePatter = (pattern: number[][]): number[][] => {
@@ -16,7 +18,6 @@ const BingoTable: React.FC<BingoTableProps> = ({ pattern }) => {
   };
 
   useEffect(() => {
-    console.log("patron ue recibe:", pattern);
     const transposedPattern = transposePatter(pattern);
     setPatternWinner(transposedPattern);
   }, [pattern]);
@@ -32,7 +33,7 @@ const BingoTable: React.FC<BingoTableProps> = ({ pattern }) => {
                 rowIndex === 2 && cellIndex === 2
                   ? "free"
                   : cell
-                  ? "cell filled"
+                  ? `cell filled ${drawnNumbers.includes(cell) ? "drawn" : ""}`
                   : "cell"
               }`}
             >
@@ -56,6 +57,9 @@ const BingoTableStlye = styled.div`
   .table-content {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
+    border-radius: 12px;
+    box-shadow: 0 -1px 8px 3px rgb(99, 96, 255);
+    padding: var(--p-3);
   }
   .free {
     display: flex;
@@ -66,21 +70,21 @@ const BingoTableStlye = styled.div`
     font-size: .875rem;
   }
   .cell {
-    background-color: var(--color-body);
-    color: var(--color-primary);
+    background-color: #27284a;
+    color: rgba(var(--color-body-rgb), .7);
     border-radius: 8px;
     display: inline-block;
-    width: 50px;
-    height: 50px;
-    margin: 0.1rem;
+    width: 55px;
+    height: 55px;
+    margin: 0.2rem;
     font-weight: 700;
+    font-size: 1.125rem;
+    border: 1px dashed rgba(var(--color-body-rgb), .5);
   }
   .cell.filled {
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--color-primary);
-    border: 1px dashed rgba(var(--color-body-rgb), 1);
   }
   .cell svg {
     font-size: 12px;

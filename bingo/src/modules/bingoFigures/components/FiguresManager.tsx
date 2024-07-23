@@ -66,7 +66,6 @@ const FigureManager: React.FC = () => {
     },
   ];
   const handleOpenModal = (id?: number) => {
-    console.log(id);
     if (id) setEditingFigureId(id);
     setIsModalOpen(true);
   };

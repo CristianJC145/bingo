@@ -16,6 +16,7 @@ interface FigureSelectorModalProps {
 }
 const FigureSelectorModal: React.FC<FigureSelectorModalProps> = ({ onClose, figures, onSelectFigures, selectedFigures}) => {
   const [localSelectedFigures, setLocalSelectedFigures] = useState<number[]>(selectedFigures);  
+  const [selectedIds, setSelectedIds] = useState<number[]>([]);
     const [pattern, setPattern] = useState<boolean[][]>(
       Array(5).
       fill(Array(5).fill(false))
@@ -33,8 +34,16 @@ const FigureSelectorModal: React.FC<FigureSelectorModalProps> = ({ onClose, figu
     };
     const handleRowClick = (figure: Figure) => {
       setPattern(figure.pattern);
+      setSelectedIds((prevSelected) =>
+        prevSelected.includes(figure.id)
+          ? prevSelected.filter((selectedId) => selectedId !== figure.id)
+          : [...prevSelected, figure.id]
+      );
     };
     useEffect(() => {
+      if (selectedFigures) {
+        setSelectedIds(selectedFigures);
+      }
       setLocalSelectedFigures(selectedFigures);
     },[selectedFigures]);
     return (
@@ -42,7 +51,7 @@ const FigureSelectorModal: React.FC<FigureSelectorModalProps> = ({ onClose, figu
         <div className="modal-main-content">
           <div className="content-list">
             {figures.map(figure => (
-              <div className="list-item" key={figure.id}>
+              <div className={`list-item ${selectedIds.includes(figure.id) ? "selected" : ""}`} key={figure.id}>
                 <input
                   type="checkbox"
                   checked={localSelectedFigures.includes(figure.id)}
@@ -95,7 +104,7 @@ const FigureSelectorModal: React.FC<FigureSelectorModalProps> = ({ onClose, figu
         </div>
         
         <div className="figure-action">
-          <AppButton variant="transparent" onClick={onClose}>Cancelar</AppButton>
+          <AppButton className="text-white" variant="transparent" onClick={onClose}>Cancelar</AppButton>
           <AppButton onClick={handleSave}>Guardar</AppButton>
         </div>
       </FigureSelectorModalStyle>
@@ -110,7 +119,7 @@ const FigureSelectorModalStyle = styled.div`
   .modal-main-content {
     display: flex;
     padding-top: 1rem;
-    gap: 2rem;
+    gap: 1.5rem;
   }
   .m-table-header {
     display: flex;
@@ -175,19 +184,39 @@ const FigureSelectorModalStyle = styled.div`
     font-weight: 700;
   }
   .content-list {
-    padding: 1rem;
-    border-radius: 8px;
-    border: 1px solid rgba(0,0,0, .05);
-    box-shadow: 1px 2px 4px rgba(0, 0, 0, .3);
-    max-height: 400px;
-    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+    max-height: 350px;
+    max-width: 250px;
+    min-width: 200px;
+    overflow-y: auto;
   }
   .list-item {
     display: flex;
+    align-items: center;
     gap: .5rem;
-    height: 2rem;
+    background-color: #15143c;
+    border-radius: 12px;
+    padding: var(--p-3);
+    width: 95%;
+    opacity: .5;
+  }
+  .list-item.selected {
+    opacity: 1;
   }
   .item-name {
-    text-transform: uppercase;
+    color: var(--color-light);
+  }
+  .content-list::-webkit-scrollbar {
+    width: 7px;
+  }
+  .content-list::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 4px;
+  }
+  .content-list::-webkit-scrollbar-thumb {
+    border-radius: 4px;
+    background-color: #9a98d1;
   }
 `

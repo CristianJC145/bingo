@@ -147,7 +147,7 @@ const FigureSelector: React.FC<FigureSelectorProps> = ({ onSelectFigure, gameRes
       </div>
 
       <AppModal
-        title="Select Figures"
+        title="Seleccion de Figuras"
         size="md"
         isOpen={isModalOpen}
         onClose={handleCloseModal}

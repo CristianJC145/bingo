@@ -306,6 +306,7 @@ const BingoGamePage: React.FC = () => {
           isOpen={isOpenWinnerModal}
           onClose={() => handleCloseModal("listWinner")}
           winner={winner}
+          drawNumbers={drawnNumbers}
         ></ListWinnerModal>
       )}
     </BingoGamePageStyle>
