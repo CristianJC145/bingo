@@ -79,13 +79,12 @@ const FigureEditor: React.FC<FigureEditorProps> = ({ id, onClose, onSave }) => {
     <FigureEditorStyle>
       <div className="figure-editor">
         <div className='form-group'>
-          <label className='fw-bold mb-1' htmlFor="figure-name">Nombre Figura</label>
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Nombre de Figura"
-            className={error ? 'form-control mb-2 error' : 'form-control mb-2 py-2'}
+            className={error ? 'form-input mb-2 w-100 error' : 'form-input mb-2 w-100 py-2'}
             id='figure-name'
           />
           {error && <p className="error-message">{error}</p>}
@@ -120,7 +119,7 @@ const FigureEditor: React.FC<FigureEditorProps> = ({ id, onClose, onSave }) => {
           </div>
         </div>
         <div className='figure-action'>
-          <AppButton variant="transparent" onClick={onClose}>Cancelar</AppButton>
+          <AppButton variant="light" className='bg-transparent' onClick={onClose}>Cancelar</AppButton>
           <AppButton onClick={handleSave}>Guardar</AppButton>
         </div>
       </div>
@@ -134,13 +133,11 @@ const FigureEditorStyle = styled.div`
   .pattern-grid {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
     margin-bottom: 1rem;
   }
   .pattern-row {
     display: flex;
     justify-content: space-between;
-    gap: .7rem;
   }
   .pattern-header {
     display: flex;

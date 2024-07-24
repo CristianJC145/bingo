@@ -21,6 +21,7 @@ interface AppDataTableProps {
   };
   onRowClick?: (row: any) => void;
   selectedRowId?: number | null;
+  children?: React.ReactNode
 }
 
 const AppDataTable: React.FC<AppDataTableProps> = ({
@@ -29,6 +30,7 @@ const AppDataTable: React.FC<AppDataTableProps> = ({
   params,
   onRowClick,
   selectedRowId,
+  children
 }) => {
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -87,7 +89,7 @@ const AppDataTable: React.FC<AppDataTableProps> = ({
     <AppDataTableStyle>
       <div className="d-flex align-items-center justify-content-between gap-md-4">
         <section className="vs-section-search-bar px-0">
-          <div className="vs-search-bar py-0 shadow-sm col-12 col-sm-6">
+          <div className="vs-search-bar py-0  col-12 col-sm-6">
             <input
               type="text"
               value={search}
@@ -96,16 +98,17 @@ const AppDataTable: React.FC<AppDataTableProps> = ({
             />
             <AppButton
               icon="search"
-              variant="dark"
+              variant="light"
               className="cursor-pointer"
             ></AppButton>
           </div>
+          { children }
         </section>
         <div
           className="d-flex gap-2 text-nowrap align-items-center"
           style={{ color: "var(--color-gray-300)" }}
         >
-          <span className="d-none d-md-block">Filas por Página</span>
+          <span className="d-none d-md-block text-light">Filas por Página</span>
           <select
             value={pagination.perPage}
             onChange={(e) =>
@@ -231,7 +234,6 @@ const AppDataTableStyle = styled.div`
   .vs-section-search-bar {
     display: flex;
     flex: 1 1 auto;
-    justify-content: space-between;
     align-items: center;
     padding: var(--p-2) var(--p-4);
     color: #fff;
@@ -240,17 +242,20 @@ const AppDataTableStyle = styled.div`
   .vs-search-bar {
     display: flex;
     align-items: center;
-    background-color: #fff;
-    padding: var(--p-1) var(--p-3);
-    border-radius: 6px;
+    gap: .5rem;
   }
   .vs-search-bar input[type="text"] {
-    padding: 0 var(--p-3);
+    padding: var(--p-3);
     border: none;
     flex-grow: 1;
     width: 100%;
-    background-color: transparent;
+    height: 100%;
+    background-color: #27284a;
+    border-radius: 6px;
     color: rgb(110, 110, 110);
+  }
+  .vs-search-bar input:hover, .vs-search-bar input:focus{
+    box-shadow: 0 0 8px rgba(0, 0, 0 , .2);
   }
   .vs-search-bar input[type="text"]:focus-visible {
     outline: none;

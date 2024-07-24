@@ -16,22 +16,23 @@
 }
 .vs-dataTable >:not(caption)>*>*  {
   padding: var(--p-4) var(--p-6);
-  color: var(--color-gray-700);
+  color: rgba(var(--color-light-rgb), .7);
 }
 .vs-dataTable td {
   text-wrap: nowrap;
-  border-bottom: 2px solid var(--color-body);
-  border-top: 2px solid var(--color-body);
+}
+.vs-dataTable tbody tr {
+  background: linear-gradient(130deg, #1e1d49, #2c2a63);
+  box-shadow: inset 0 0 4px rgba(var(--color-light-rgb), .2);
+  border-radius: 0.4rem;
 }
 .vs-dataTable td:first-child{
-  border-top-left-radius: 0.375rem;
-  border-bottom-left-radius: 0.375rem;
-  border-left: 2px solid var(--color-body);
+  border-top-left-radius: 0.4rem;
+  border-bottom-left-radius: 0.4rem;
 }
 .vs-dataTable td:last-child {
-  border-top-right-radius: 0.375rem;
-  border-bottom-right-radius: 0.375rem;
-  border-right: 2px solid var(--color-body);
+  border-top-right-radius: 0.4rem;
+  border-bottom-right-radius: 0.4rem;
 }
 .no-scroll {
   overflow: hidden;

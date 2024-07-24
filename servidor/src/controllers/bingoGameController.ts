@@ -2,9 +2,7 @@ import db from "../database";
 import { Request, Response } from 'express';
 import { CheckWinnerRequest } from "../models/FigureCards";
 import { RowDataPacket } from 'mysql2/promise';
-import { Server as WebSocketServer } from 'ws';
 import { wss } from "..";
-import { error } from "console";
 
 interface BingoCard extends RowDataPacket {
     id: number;
@@ -45,8 +43,7 @@ const getBingoCards = async(range: {start?: number; end?: number; specific?: num
   
 export const checkWinner = async (req: Request, res: Response) => {
   const { balls, figures, range }: CheckWinnerRequest = req.body;
-  console.log("rango seleccionado: ", req.body)
-
+  let previousWinningCards: any[] = [];
   try {
     const cartons = await getBingoCards(range);
     let winner = false;
@@ -59,18 +56,26 @@ export const checkWinner = async (req: Request, res: Response) => {
           winner= true;
           winningCards.push({
             id: carton.id,
-            pattern: carton.card
-          })
+            pattern: carton.card,
+            patternFigure: figurePattern
+          });
           break;
         }
       }
     }
-    const message = JSON.stringify({ type: 'winner-update', winner, winningCards, balls, figures });
-    wss.clients.forEach((client) => {
-      if (client.readyState === client.OPEN) {
-        client.send(message);
-      }
-    });
+    const newWinningCards = winningCards.filter(
+      wc => !previousWinningCards.some(pwc => pwc.id === wc.id)
+    );
+    if (newWinningCards.length > 0) {
+      previousWinningCards = [...previousWinningCards, ...newWinningCards];
+  
+      const message = JSON.stringify({ type: 'winner-update', winner, winningCards, balls, figures });
+      wss.clients.forEach((client) => {
+        if (client.readyState === client.OPEN) {
+          client.send(message);
+        }
+      });
+    }
     res.json({ winner, winningCards });
   } catch (error) {
     res.status(500).json({ message: 'Error checking winner' });

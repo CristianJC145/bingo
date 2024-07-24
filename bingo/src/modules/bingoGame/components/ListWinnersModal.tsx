@@ -6,6 +6,7 @@ import { useState } from "react";
 interface Card {
   id: number;
   pattern: number[][];
+  patternFigure: boolean[][];
 }
 
 interface ListWinnerModalProps {
@@ -18,20 +19,24 @@ const ListWinnerModal: React.FC<ListWinnerModalProps> = ({
   isOpen,
   onClose,
   winner,
-  drawNumbers
+  drawNumbers,
 }) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const data: Card[] = winner.map((win: any) => ({
     ...win,
     pattern: JSON.parse(win.pattern),
+    patternFigure: win.patternFigure,
   }));
-  const [pattern, setPatternWinner] = useState<number[][]>( data.length > 0 ? data[0].pattern : Array(5).fill(Array(5).fill(0)));
-  const [selectedId, setSelectedId] = useState<number>(data.length > 0 ? data[0].id : -1);
-
-  const handlePatternWinner = (winner: number[][], winnerId: number) => {
-    setPatternWinner(winner);
-    setSelectedId(winnerId);
+  const [currentWinner, setCurrentWinner] = useState<Card>(
+    data.length > 0
+      ? data[0]
+      : { id: -1, pattern: Array(5).fill(Array(5).fill(0)), patternFigure: Array(5).fill(Array(5).fill(false)) }
+  );
+  const handlePatternWinner = (winner: Card) => {
+    setCurrentWinner(winner);
   };
+  console.log("all data winner:::::::::::::.",currentWinner);
+
   return (
     <ListWinnerModalStyle>
       <AppModal size="md" title="Lista de Ganadores" isOpen={isOpen} onClose={onClose}>
@@ -39,15 +44,15 @@ const ListWinnerModal: React.FC<ListWinnerModalProps> = ({
           <div className="section-numbers">
             {data.map((win) => (
               <div
-                className={`number-winners ${selectedId === win.id ? "selected" : ""}`}
+                className={`number-winners ${currentWinner.id === win.id ? "selected" : ""}`}
                 key={win.id}
-                onClick={() => handlePatternWinner(win.pattern, win.id)}
+                onClick={() => handlePatternWinner(win)}
               >
                 <span>{win.id}</span>
               </div>
             ))}
           </div>
-          <BingoTable pattern={pattern} drawnNumbers={drawNumbers}></BingoTable>
+          <BingoTable patternFigure={currentWinner.patternFigure} pattern={currentWinner.pattern} drawnNumbers={drawNumbers}></BingoTable>
         </div>
       </AppModal>
     </ListWinnerModalStyle>

@@ -188,7 +188,7 @@ const AppButtonStyles = styled.div`
     width: var(--width-btn-icon);
     height: var(--height-btn-icon);
     border-color: transparent;
-    background-color: transparent;
+    background: transparent;
     padding: 0;
     font-size: 16px;
   }

@@ -59,8 +59,8 @@ const FigureManager: React.FC = () => {
       columnClassName: 'column-class',
       Cell: ({ value }: { value: any }) => (
         <div className='btn-actions'>
-          <AppButton icon="check-square" className="bg-transparent" variant='dark' onClick={() => handleOpenModal(value.id)}></AppButton>
-          <AppButton icon="fa-trash-alt" className="text-danger bg-transparent" onClick={() => handleDeleteFigure(value)}></AppButton>
+          <AppButton icon="check-square" className="bg-transparent" variant='light' onClick={() => handleOpenModal(value.id)}></AppButton>
+          <AppButton icon="fa-trash-alt" className='text-danger' variant="transparent" onClick={() => handleDeleteFigure(value)}></AppButton>
         </div>
       ),
     },
@@ -103,9 +103,9 @@ const FigureManager: React.FC = () => {
     <FigureManagerStyle>
       <div className='figure-manager'>
         <div className='left-side'>
-          <h4 className='fw-bold'>Administrar Figuras</h4>
-          <AppButton className='figure-add' onClick={() => handleOpenModal()}>Añadir Figura</AppButton>
-          <AppDataTable columns={columns} service={{ run: new GetAllFiguresService().run }} selectedRowId={selectedRowId} onRowClick={handleRowClick} />
+          <AppDataTable columns={columns} service={{ run: new GetAllFiguresService().run }} selectedRowId={selectedRowId} onRowClick={handleRowClick}>
+            <AppButton className='figure-add' icon="plus" onClick={() => handleOpenModal()}>Añadir Figura</AppButton>
+          </AppDataTable>
         </div>
         <div className='rigth-side'>
           {selectedFigure && (
@@ -156,11 +156,16 @@ const FigureManagerStyle = styled.div`
   .figure-manager {
     display: flex;
     flex-direction: row;
-    width: 100%;
     gap: 2rem;
+    max-width: 1500px;
+    margin: 1rem auto;
+    padding: var(--p-6) var(--p-6);
+    border-radius: 12px;
+    background-color: #1e1d49;
+    box-shadow: 1px 1px 3px rgba(255, 255, 255, 0.05), 2px 1px 7px 3px rgba(0, 0, 0, 0.05);
   }
   .left-side {
-    width: 50%;
+    width: 65%;
   }
   .rigth-side {
     display: flex;
@@ -186,7 +191,6 @@ const FigureManagerStyle = styled.div`
   .table-content {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
-    gap: 1rem;
   }
   .table-figure-name {
     color: var(--color-body);
@@ -195,7 +199,8 @@ const FigureManagerStyle = styled.div`
     font-weight: 700;
   }
   .figure-add {
-    width: 200px;
+    width: 130px;
+    margin-left: 1rem;
   }
   .cell {
     background-color: var(--color-body);
@@ -229,8 +234,7 @@ const FigureManagerStyle = styled.div`
     gap: 1rem;  
   }
   .selected {
-    background-color: rgba(var(--color-gray-300-rgb), .075);
-    box-shadow: 8px 3px 8px rgba(0, 0, 0 , 0.15);
+    background: linear-gradient(130deg, #2c2a63, #1e1d49);
   }
   .selected td {
     border-bottom: none;

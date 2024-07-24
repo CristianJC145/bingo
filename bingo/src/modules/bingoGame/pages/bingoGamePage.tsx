@@ -23,6 +23,7 @@ interface Figure {
 interface Card {
   id: number;
   pattern: number[][];
+  patternFigure: boolean[][];
 }
 
 const BingoGamePage: React.FC = () => {
@@ -146,7 +147,6 @@ const BingoGamePage: React.FC = () => {
     const response = await checkWinnerService.run(data);
 
     const { winner, winningCards } = response;
-
     if (winner) {
       setIsWinner(!isWinner);
       setWinner(winningCards);

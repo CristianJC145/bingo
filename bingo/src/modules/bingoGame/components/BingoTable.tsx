@@ -4,13 +4,13 @@ import styled from "styled-components";
 interface BingoTableProps {
   pattern: number[][];
   drawnNumbers: number[];
+  patternFigure: boolean[][];
 }
 
-const BingoTable: React.FC<BingoTableProps> = ({ pattern, drawnNumbers }) => {
-  console.log("numeros que han saluido: ",drawnNumbers);
+const BingoTable: React.FC<BingoTableProps> = ({ pattern, patternFigure, drawnNumbers }) => {
   const [patternWinner, setPatternWinner] = useState<number[][]>(pattern);
 
-  const transposePatter = (pattern: number[][]): number[][] => {
+  const transposePattern = (pattern: number[][]): number[][] => {
     const transposed: number[][] = pattern[0].map((_, colIndex) =>
       pattern.map((row) => row[colIndex])
     );
@@ -18,9 +18,11 @@ const BingoTable: React.FC<BingoTableProps> = ({ pattern, drawnNumbers }) => {
   };
 
   useEffect(() => {
-    const transposedPattern = transposePatter(pattern);
+    const transposedPattern = transposePattern(pattern);
     setPatternWinner(transposedPattern);
   }, [pattern]);
+  
+  const isDrawn = (number: number) => drawnNumbers.includes(number);
 
   return (
     <BingoTableStlye>
@@ -32,8 +34,8 @@ const BingoTable: React.FC<BingoTableProps> = ({ pattern, drawnNumbers }) => {
               className={`${
                 rowIndex === 2 && cellIndex === 2
                   ? "free"
-                  : cell
-                  ? `cell filled ${drawnNumbers.includes(cell) ? "drawn" : ""}`
+                  : cell && isDrawn(cell) && patternFigure[rowIndex][cellIndex]
+                  ? "cell filled"
                   : "cell"
               }`}
             >
@@ -70,10 +72,12 @@ const BingoTableStlye = styled.div`
     font-size: .875rem;
   }
   .cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     background-color: #27284a;
     color: rgba(var(--color-body-rgb), .7);
     border-radius: 8px;
-    display: inline-block;
     width: 55px;
     height: 55px;
     margin: 0.2rem;
@@ -82,9 +86,8 @@ const BingoTableStlye = styled.div`
     border: 1px dashed rgba(var(--color-body-rgb), .5);
   }
   .cell.filled {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    background: linear-gradient(110deg, rgba(96, 86, 238, 1) 0%, rgba(135, 123, 255, 1) 100%);
+    border: unset;
   }
   .cell svg {
     font-size: 12px;
