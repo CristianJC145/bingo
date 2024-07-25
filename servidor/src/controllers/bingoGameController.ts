@@ -44,6 +44,11 @@ const getBingoCards = async(range: {start?: number; end?: number; specific?: num
 export const checkWinner = async (req: Request, res: Response) => {
   const { balls, figures, range }: CheckWinnerRequest = req.body;
   let previousWinningCards: any[] = [];
+  const checkForNewWinners = (currentWinners: any[], previousWinners: any[]) => {
+    return currentWinners.filter(
+      cw => !previousWinners.some(pw => pw.id === cw.id)
+    );
+  };
   try {
     const cartons = await getBingoCards(range);
     let winner = false;
@@ -63,19 +68,21 @@ export const checkWinner = async (req: Request, res: Response) => {
         }
       }
     }
-    const newWinningCards = winningCards.filter(
-      wc => !previousWinningCards.some(pwc => pwc.id === wc.id)
-    );
-    if (newWinningCards.length > 0) {
-      previousWinningCards = [...previousWinningCards, ...newWinningCards];
+    if (winner) {
+      const newWinningCards = checkForNewWinners(winningCards, previousWinningCards);
   
-      const message = JSON.stringify({ type: 'winner-update', winner, winningCards, balls, figures });
-      wss.clients.forEach((client) => {
-        if (client.readyState === client.OPEN) {
-          client.send(message);
-        }
-      });
+      if (newWinningCards.length > 0) {
+        previousWinningCards = [...previousWinningCards, ...newWinningCards];
+  
+        const message = JSON.stringify({ type: 'winner-update', winner: true, winningCards: newWinningCards, balls, figures });
+        wss.clients.forEach((client) => {
+          if (client.readyState === client.OPEN) {
+            client.send(message);
+          }
+        });
+      }
     }
+
     res.json({ winner, winningCards });
   } catch (error) {
     res.status(500).json({ message: 'Error checking winner' });

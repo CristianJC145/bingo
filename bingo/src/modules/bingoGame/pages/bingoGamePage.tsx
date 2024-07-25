@@ -43,10 +43,15 @@ const BingoGamePage: React.FC = () => {
   const [isWinner, setIsWinner] = useState(false);
   const [winner, setWinner] = useState<Card[]>([]);
   const [isOpenWinnerModal, setIsOpenWinnerModal] = useState(false);
+  const [previousWinners, setPreviousWinners] = useState<Card[]>([]);
 
   const hasCartonRangeData = () => {
     const { start, end, specific } = cartonRange;
-    const isStartEndValid = typeof start === 'number' && start !== 0 && typeof end === 'number' && end !== 0;
+    const isStartEndValid =
+      typeof start === "number" &&
+      start !== 0 &&
+      typeof end === "number" &&
+      end !== 0;
     const isSpecificValid = Array.isArray(specific) && specific.length > 0;
 
     return isStartEndValid || isSpecificValid;
@@ -136,6 +141,15 @@ const BingoGamePage: React.FC = () => {
     setDrawnNumbers([...drawnNumbers, drawnNumber]);
   };
 
+  const checkForNewWinners = (
+    currentWinners: Card[],
+    previousWinners: Card[]
+  ) => {
+    return currentWinners.filter(
+      (cw) => !previousWinners.some((pw) => pw.id === cw.id)
+    );
+  };
+
   const checkForWinner = async (balls: number[]) => {
     if (!isGameStarted) return;
     const data = {
@@ -148,8 +162,13 @@ const BingoGamePage: React.FC = () => {
 
     const { winner, winningCards } = response;
     if (winner) {
-      setIsWinner(!isWinner);
-      setWinner(winningCards);
+      const newWinningCards = checkForNewWinners(winningCards, previousWinners);
+
+      if (newWinningCards.length > 0) {
+        setPreviousWinners([...previousWinners, ...newWinningCards]);
+        setIsWinner(true);
+        setWinner(newWinningCards);
+      }
     }
   };
 
