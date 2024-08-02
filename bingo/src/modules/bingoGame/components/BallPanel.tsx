@@ -18,19 +18,18 @@ const BallPanel: React.FC<BallPanelProps> = ({
   const [selectedBalls, setSelectedBalls] = useState<number[]>([]);
   const [userInteracted, setUserInteracted] = useState<boolean>(false);
   const playSound = (ballNumber: number) => {
-    console.log("reproducir sonido")
-
     const audio = new Audio(
       `${settings.appSounds}/sounds/ball/NUM${ballNumber}.wav`
     );
     audio.play();
   };
-  useEffect(() => {
+  useEffect(()=> {
     if (gameReset) {
       setSelectedBalls([]);
       setUserInteracted(false);
     }
-    
+  },[gameReset])
+  useEffect(() => {
     if (onRandomBall && userInteracted && gameReset === false) {
       const ballsToAdd = Array.isArray(onRandomBall)
         ? onRandomBall
@@ -41,7 +40,7 @@ const BallPanel: React.FC<BallPanelProps> = ({
       playSound(updatedBallsArray[updatedBallsArray.length - 1]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onRandomBall, isActivePanel, gameReset]);
+  }, [onRandomBall, isActivePanel]);
 
   useEffect(() => {
     const handleUserInteraction = () => setUserInteracted(true);
@@ -58,7 +57,7 @@ const BallPanel: React.FC<BallPanelProps> = ({
         randomBallButton.removeEventListener("click", handleUserInteraction);
       }
     };
-  }, []);
+  }, [userInteracted]);
 
   const handleBallClick = (ball: number) => {
     setUserInteracted(true);
