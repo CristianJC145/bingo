@@ -40,6 +40,18 @@ a:hover {
   font-weight: 600;
   font-style: normal;
 }
+@font-face {
+  font-family: 'Poppins';
+  src: url('../src/assets/fonts/Poppins-Bold.ttf');
+  font-weight: 700;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Poppins';
+  src: url('../src/assets/fonts/Poppins-Black.ttf');
+  font-weight: 900;
+  font-style: normal;
+}
 
 
 

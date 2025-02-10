@@ -35,7 +35,6 @@ const ListWinnerModal: React.FC<ListWinnerModalProps> = ({
   const handlePatternWinner = (winner: Card) => {
     setCurrentWinner(winner);
   };
-  console.log("all data winner:::::::::::::.",currentWinner);
 
   return (
     <ListWinnerModalStyle>

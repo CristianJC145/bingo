@@ -4,6 +4,8 @@ import FigureSelector from "../components/FigureSelector";
 import CartonRangeSelector from "../components/CartonRangeSelector";
 import AppButton from "../../../shared/components/Buttons/AppButton";
 import { CheckWinnerService } from "../services/checkWinner.service";
+import { services } from "../../../shared/constant/services";
+
 import { toast } from "react-toastify";
 import styled from "styled-components";
 import { getValidNumbers } from "../logic/getValidNumers";
@@ -11,6 +13,9 @@ import GameStats from "../components/GameStats";
 import WinnerModal from "../components/WinnerModal";
 import AppIcon from "../../../shared/components/AppIcon";
 import ListWinnerModal from "../components/ListWinnersModal";
+import ConfirmFinish from "../components/ConfirmDelete";
+import AppModal from "../../../shared/components/AppModal";
+import configureApi from "../../../shared/utils/axios";
 
 const checkWinnerService = new CheckWinnerService();
 
@@ -44,6 +49,7 @@ const BingoGamePage: React.FC = () => {
   const [winner, setWinner] = useState<Card[]>([]);
   const [isOpenWinnerModal, setIsOpenWinnerModal] = useState(false);
   const [previousWinners, setPreviousWinners] = useState<Card[]>([]);
+  const [isOpenConfirmModal, setIsOpenConfirmModal] = useState(false);
 
   const hasCartonRangeData = useCallback(() => {
     const { start, end, specific } = cartonRange;
@@ -84,14 +90,22 @@ const BingoGamePage: React.FC = () => {
   const handleCardsRangue = () => {
     setCardsRangue(!cardsRangue);
   };
-  const handleSelectFigure = (figures: Figure[]) => {
-    setSelectedFigures(figures);
+  const handleSelectFigure = async (figures: Figure[]) => {
+    try {
+      await configureApi().post('http://localhost:3000/api/game/update-figure', { figures });
+      setSelectedFigures(figures);
+    } catch (error) {
+      console.error('Error obteniendo las figuras:', error); 
+    }
   };
+
   const handleCloseModal = (type: string) => {
     if (type === "winner") {
       setIsWinner(!isWinner);
     } else if (type === "listWinner") {
       setIsOpenWinnerModal(!isOpenWinnerModal);
+    } else if (type === "finishGame") {
+      setIsOpenConfirmModal(!isOpenConfirmModal);
     }
   };
   const handleListWinnerModal = () => {
@@ -105,21 +119,30 @@ const BingoGamePage: React.FC = () => {
     setCartonRange(range);
     setGameReset(false);
   };
+  const handleFinishGame = async () => {
+    try {
+      const response = await configureApi().post('http://localhost:3000/api/game/reset-game');
+      console.log(response.data.message);
+    } catch (error) {
+      console.error('Error resetting game:', error);
+    }
+    setAllReady(false);
+    setBalls([]);
+    setCardsRangue(false);
+    setDrawnNumbers([]);
+    setGameRandom(false);
+    setCartonRange({ start: 0, end: 0, specific: [] });
+    setSelectedFigures([]);
+    setIsGameStarted(false);
+    setGameReset(true);
+    setWinner([]);
+  }
   const handleStartOrFinishGame = () => {
     if (allReady && !isGameStarted) {
       setIsGameStarted(!isGameStarted);
       toast.success("Juego iniciado");
     } else if (isGameStarted) {
-      setAllReady(false);
-      setBalls([]);
-      setCardsRangue(false);
-      setDrawnNumbers([]);
-      setGameRandom(false);
-      setCartonRange({ start: 0, end: 0, specific: [] });
-      setSelectedFigures([]);
-      setIsGameStarted(false);
-      setGameReset(true);
-      setWinner([]);
+      setIsOpenConfirmModal(!isOpenConfirmModal);
     }
   };
   const drawNumber = () => {
@@ -328,6 +351,9 @@ const BingoGamePage: React.FC = () => {
           drawNumbers={drawnNumbers}
         ></ListWinnerModal>
       )}
+      <AppModal title="Terminar Juego" isOpen={isOpenConfirmModal} onClose={() => handleCloseModal("finishGame")}>
+        <ConfirmFinish onClose={() => handleCloseModal("finishGame")} onSave={handleFinishGame}></ConfirmFinish>
+      </AppModal>
     </BingoGamePageStyle>
   );
 };

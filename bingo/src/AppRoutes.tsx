@@ -9,6 +9,7 @@ import BingoCardGeneratorRoutes from "./modules/bingoCardGenerator/bingoCardGene
 import BingoFiguresRoutes from "./modules/bingoFigures/bingoFigure.routes";
 import BingoGameRoutes from "./modules/bingoGame/bingoGame.routes";
 import BingoCustomizationRoutes from "./modules/bingoCustomization/bignoCustomization.routes";
+import ObsInterface from "./modules/bingoGame/components/ObsInterface";
 const AppRouting: React.FC = () => {
   return (
     <Router>
@@ -24,6 +25,7 @@ const AppRouting: React.FC = () => {
           path="/customization/*"
           element={<BingoCustomizationRoutes />}
         ></Route>
+        <Route path="/obs" element={<ObsInterface />} />
       </Routes>
     </Router>
   );
