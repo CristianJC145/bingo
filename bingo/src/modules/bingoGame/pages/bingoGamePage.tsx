@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import BallPanel from "../components/BallPanel";
 import FigureSelector from "../components/FigureSelector";
 import CartonRangeSelector from "../components/CartonRangeSelector";
@@ -45,7 +45,7 @@ const BingoGamePage: React.FC = () => {
   const [isOpenWinnerModal, setIsOpenWinnerModal] = useState(false);
   const [previousWinners, setPreviousWinners] = useState<Card[]>([]);
 
-  const hasCartonRangeData = () => {
+  const hasCartonRangeData = useCallback(() => {
     const { start, end, specific } = cartonRange;
     const isStartEndValid =
       typeof start === "number" &&
@@ -55,7 +55,7 @@ const BingoGamePage: React.FC = () => {
     const isSpecificValid = Array.isArray(specific) && specific.length > 0;
 
     return isStartEndValid || isSpecificValid;
-  };
+  }, [cartonRange]);
 
   useEffect(() => {
     if (selectedFigures.length > 0 && hasCartonRangeData()) {
@@ -63,7 +63,7 @@ const BingoGamePage: React.FC = () => {
     } else {
       setAllReady(false);
     }
-  }, [selectedFigures, cartonRange]);
+  }, [selectedFigures, cartonRange, hasCartonRangeData]);
 
   useEffect(() => {
     if (gameRandom && drawnNumbers.length > 0) {
