@@ -4,7 +4,6 @@ import FigureSelector from "../components/FigureSelector";
 import CartonRangeSelector from "../components/CartonRangeSelector";
 import AppButton from "../../../shared/components/Buttons/AppButton";
 import { CheckWinnerService } from "../services/checkWinner.service";
-import { services } from "../../../shared/constant/services";
 
 import { toast } from "react-toastify";
 import styled from "styled-components";
@@ -92,10 +91,13 @@ const BingoGamePage: React.FC = () => {
   };
   const handleSelectFigure = async (figures: Figure[]) => {
     try {
-      await configureApi().post('http://localhost:3000/api/game/update-figure', { figures });
+      await configureApi().post(
+        "http://localhost:3000/api/game/update-figure",
+        { figures }
+      );
       setSelectedFigures(figures);
     } catch (error) {
-      console.error('Error obteniendo las figuras:', error); 
+      console.error("Error obteniendo las figuras:", error);
     }
   };
 
@@ -121,10 +123,12 @@ const BingoGamePage: React.FC = () => {
   };
   const handleFinishGame = async () => {
     try {
-      const response = await configureApi().post('http://localhost:3000/api/game/reset-game');
+      const response = await configureApi().post(
+        "http://localhost:3000/api/game/reset-game"
+      );
       console.log(response.data.message);
     } catch (error) {
-      console.error('Error resetting game:', error);
+      console.error("Error resetting game:", error);
     }
     setAllReady(false);
     setBalls([]);
@@ -136,7 +140,8 @@ const BingoGamePage: React.FC = () => {
     setIsGameStarted(false);
     setGameReset(true);
     setWinner([]);
-  }
+    setPreviousWinners([]);
+  };
   const handleStartOrFinishGame = () => {
     if (allReady && !isGameStarted) {
       setIsGameStarted(!isGameStarted);
@@ -164,34 +169,43 @@ const BingoGamePage: React.FC = () => {
     setDrawnNumbers([...drawnNumbers, drawnNumber]);
   };
 
-  const checkForNewWinners = (
-    currentWinners: Card[],
-    previousWinners: Card[]
-  ) => {
-    return currentWinners.filter(
-      (cw) => !previousWinners.some((pw) => pw.id === cw.id)
-    );
-  };
+  // const checkForNewWinners = (
+  //   currentWinners: Card[],
+  //   previousWinners: Card[]
+  // ) => {
+  //   return currentWinners.filter(
+  //     (cw) => !previousWinners.some((pw) => pw.id === cw.id)
+  //   );
+  // };
 
   const checkForWinner = async (balls: number[]) => {
     if (!isGameStarted) return;
+
     const data = {
-      balls: balls,
+      balls,
       figures: selectedFigures,
       range: cartonRange,
     };
 
     const response = await checkWinnerService.run(data);
-
     const { winner, winningCards } = response;
-    if (winner) {
-      const newWinningCards = checkForNewWinners(winningCards, previousWinners);
 
-      if (newWinningCards.length > 0) {
-        setPreviousWinners([...previousWinners, ...newWinningCards]);
-        setIsWinner(true);
-        setWinner(newWinningCards);
-      }
+    if (winner) {
+      setPreviousWinners((prev) => {
+        // Filtramos solo los nuevos ganadores
+        const newWinningCards = winningCards.filter(
+          (card: { id: number }) =>
+            !prev.some((prevCard) => prevCard.id === card.id)
+        );
+
+        if (newWinningCards.length > 0) {
+          setWinner(newWinningCards);
+          setIsWinner(true);
+        }
+
+        // Retornamos la lista acumulada de ganadores
+        return [...prev, ...newWinningCards];
+      });
     }
   };
 
@@ -329,8 +343,8 @@ const BingoGamePage: React.FC = () => {
                   <span>Lista de ganadores</span>
                   <div className="badge-winners">
                     {winner.length > 1
-                      ? `${winner.length} cartones`
-                      : `${winner.length} carton`}
+                      ? `${previousWinners.length} cartones`
+                      : `${previousWinners.length} carton`}
                   </div>
                 </div>
               </div>
@@ -347,12 +361,19 @@ const BingoGamePage: React.FC = () => {
         <ListWinnerModal
           isOpen={isOpenWinnerModal}
           onClose={() => handleCloseModal("listWinner")}
-          winner={winner}
+          winner={previousWinners}
           drawNumbers={drawnNumbers}
         ></ListWinnerModal>
       )}
-      <AppModal title="Terminar Juego" isOpen={isOpenConfirmModal} onClose={() => handleCloseModal("finishGame")}>
-        <ConfirmFinish onClose={() => handleCloseModal("finishGame")} onSave={handleFinishGame}></ConfirmFinish>
+      <AppModal
+        title="Terminar Juego"
+        isOpen={isOpenConfirmModal}
+        onClose={() => handleCloseModal("finishGame")}
+      >
+        <ConfirmFinish
+          onClose={() => handleCloseModal("finishGame")}
+          onSave={handleFinishGame}
+        ></ConfirmFinish>
       </AppModal>
     </BingoGamePageStyle>
   );

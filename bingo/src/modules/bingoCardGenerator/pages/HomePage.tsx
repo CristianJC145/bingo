@@ -73,7 +73,7 @@ const HomePage: React.FC = () => {
     <HomePageStyle>
       <div className="home-page">
         <div className="page-content">
-          <h4 className="fw-bold">Generador Cartones Bingo</h4>
+          <h4 className="fw-bold text-white">Generador Cartones Bingo</h4>
           <input
             className="form-control py-2 my-4"
             type="number"
@@ -107,6 +107,7 @@ const HomePageStyle = styled.div`
     padding: 3rem 2rem;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
     text-align: center;
+    background-color: #1e1d49;
   }
   .btn-action {
     display: flex;

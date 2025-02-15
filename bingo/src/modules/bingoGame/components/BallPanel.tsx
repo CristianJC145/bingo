@@ -17,20 +17,25 @@ const BallPanel: React.FC<BallPanelProps> = ({
 }) => {
   const [selectedBalls, setSelectedBalls] = useState<number[]>([]);
   const [userInteracted, setUserInteracted] = useState<boolean>(false);
+
   const playSound = (ballNumber: number) => {
-    const audio = new Audio(
-      `${settings.appSounds}/sounds/ball/NUM${ballNumber}.wav`
-    );
-    audio.play();
+    if (userInteracted) {
+      const audio = new Audio(
+        `${settings.appSounds}/sounds/ball/NUM${ballNumber}.wav`
+      );
+      audio.play();
+    }
   };
-  useEffect(()=> {
+
+  useEffect(() => {
     if (gameReset) {
       setSelectedBalls([]);
       setUserInteracted(false);
     }
-  },[gameReset])
+  }, [gameReset]);
+
   useEffect(() => {
-    if (onRandomBall && userInteracted && gameReset === false) {
+    if (onRandomBall && userInteracted && !gameReset) {
       const ballsToAdd = Array.isArray(onRandomBall)
         ? onRandomBall
         : [onRandomBall];
@@ -39,8 +44,7 @@ const BallPanel: React.FC<BallPanelProps> = ({
       setSelectedBalls(updatedBallsArray);
       playSound(updatedBallsArray[updatedBallsArray.length - 1]);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onRandomBall, isActivePanel]);
+  }, [onRandomBall, userInteracted]);
 
   useEffect(() => {
     const handleUserInteraction = () => setUserInteracted(true);
@@ -53,43 +57,41 @@ const BallPanel: React.FC<BallPanelProps> = ({
     }
 
     return () => {
-      if (randomBallButton) {
-        randomBallButton.removeEventListener("click", handleUserInteraction);
-      }
+      randomBallButton?.removeEventListener("click", handleUserInteraction);
     };
-  }, [userInteracted]);
+  }, []);
 
   const handleBallClick = (ball: number) => {
-    setUserInteracted(true);
-    const updatedBalls = selectedBalls.includes(ball)
-      ? selectedBalls.filter((b) => b !== ball)
-      : [...selectedBalls, ball];
-    setSelectedBalls(updatedBalls);
-    onSelectBall(updatedBalls);
-    playSound(ball);
+    setUserInteracted(true); // Marcamos interacción del usuario antes de actualizar el estado
+    setSelectedBalls((prevSelectedBalls) => {
+      const updatedBalls = prevSelectedBalls.includes(ball)
+        ? prevSelectedBalls.filter((b) => b !== ball)
+        : [...prevSelectedBalls, ball];
+
+      onSelectBall(updatedBalls);
+      playSound(ball); // Reproducimos el sonido aquí directamente
+      return updatedBalls;
+    });
   };
 
   return (
     <BallPanelStyle className="w-100">
       <div className="ball-panel">
-        {[...Array(75)].map((index, i) => {
+        {[...Array(75)].map((_, i) => {
           const ball = i + 1;
           return (
             <div
-              className={
-                selectedBalls.includes(ball)
-                  ? "ball-container selected"
-                  : "ball-container"
-              }
-              key={i}
+              className={`ball-container ${
+                selectedBalls.includes(ball) ? "selected" : ""
+              }`}
+              key={ball}
             >
               <button
-                key={`ball-${index}`}
                 onClick={() => handleBallClick(ball)}
                 disabled={isActivePanel}
-                className={
-                  selectedBalls.includes(ball) ? "ball selected" : "ball"
-                }
+                className={`ball ${
+                  selectedBalls.includes(ball) ? "selected" : ""
+                }`}
               >
                 {ball}
               </button>
