@@ -1,6 +1,9 @@
 import styled from "styled-components";
 import bingoImage from "../../../assets/images/bingo.png";
 import AppButton from "../../../shared/components/Buttons/AppButton";
+import { settings } from "../../../shared/constant/settings.constants";
+import { Timestamp } from "firebase-admin/firestore";
+import { useEffect } from "react";
 
 interface Card {
   id: number;
@@ -18,6 +21,22 @@ const WinnerModal: React.FC<WinnerModalProps> = ({
 }) => {
   if (!isOpen) return null;
   const winners = winnerCards?.length;
+    const playSound = () => {
+      const audio = new Audio(
+        `${settings.appSounds}/sounds/ball/bingo.mp3`
+      );
+      audio.play();
+    };
+    useEffect(() => {
+      if (!isOpen) return; // Solo ejecuta cuando el modal está abierto
+    
+      const timeout = setTimeout(() => {
+        playSound();
+      }, 1700);
+    
+      return () => clearTimeout(timeout); // Limpia el timeout si el componente se desmonta o `isOpen` cambia
+    }, [isOpen]);
+    
   return (
     <WinnerModalStyle>
       <div className="winner-overlay">

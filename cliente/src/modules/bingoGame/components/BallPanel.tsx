@@ -59,7 +59,7 @@ const BallPanel: React.FC<BallPanelProps> = ({
     return () => {
       randomBallButton?.removeEventListener("click", handleUserInteraction);
     };
-  }, []);
+  }, [userInteracted]);
 
   const handleBallClick = (ball: number) => {
     setUserInteracted(true); // Marcamos interacción del usuario antes de actualizar el estado

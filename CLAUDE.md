@@ -1,0 +1,1 @@
+Antes de cualquier tarea, lee y aplica FABLE-PROTOCOL.md. Es obligatorio, no opcional.

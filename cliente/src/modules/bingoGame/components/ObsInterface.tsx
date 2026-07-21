@@ -56,7 +56,6 @@ const ObsInterface: React.FC = () => {
     G: Array.from({ length: 15 }, (_, i) => i + 46),
     O: Array.from({ length: 15 }, (_, i) => i + 61),
   };
-  console.log("figuras::",figures);
 
   return (
     <ObsInterfaceStyle>

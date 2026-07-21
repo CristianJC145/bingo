@@ -40,7 +40,7 @@ const BingoGamePage: React.FC = () => {
   const [isGameStarted, setIsGameStarted] = useState(false);
   const [allReady, setAllReady] = useState(false);
   const [balls, setBalls] = useState<number[]>([]);
-  const [gameRandom, setGameRandom] = useState(false);
+  const [gameRandom, setGameRandom] = useState(true);
   const [drawnNumbers, setDrawnNumbers] = useState<number[]>([]);
   const [cardsRangue, setCardsRangue] = useState(false);
   const [gameReset, setGameReset] = useState(false);
@@ -49,6 +49,7 @@ const BingoGamePage: React.FC = () => {
   const [isOpenWinnerModal, setIsOpenWinnerModal] = useState(false);
   const [previousWinners, setPreviousWinners] = useState<Card[]>([]);
   const [isOpenConfirmModal, setIsOpenConfirmModal] = useState(false);
+
 
   const hasCartonRangeData = useCallback(() => {
     const { start, end, specific } = cartonRange;
@@ -82,6 +83,7 @@ const BingoGamePage: React.FC = () => {
   const handleSelectBall = (balls: number[]) => {
     setBalls(balls);
     checkForWinner(balls);
+    setDrawnNumbers(balls);
   };
   const handleGameRandom = () => {
     setGameRandom(!gameRandom);
@@ -134,7 +136,7 @@ const BingoGamePage: React.FC = () => {
     setBalls([]);
     setCardsRangue(false);
     setDrawnNumbers([]);
-    setGameRandom(false);
+    setGameRandom(true);
     setCartonRange({ start: 0, end: 0, specific: [] });
     setSelectedFigures([]);
     setIsGameStarted(false);
@@ -152,6 +154,10 @@ const BingoGamePage: React.FC = () => {
   };
   const drawNumber = () => {
     const validNumbers = getValidNumbers(selectedFigures);
+    
+    // const validNumbers = [30,44,23,55, 17, 57, 51];
+    // const validNumbers = [22, 39, 33, 44, 58, 31, 55];
+
     if (validNumbers.length === 0) {
       return;
     }
@@ -168,15 +174,6 @@ const BingoGamePage: React.FC = () => {
     const drawnNumber = availableNumbers[randomIndex];
     setDrawnNumbers([...drawnNumbers, drawnNumber]);
   };
-
-  // const checkForNewWinners = (
-  //   currentWinners: Card[],
-  //   previousWinners: Card[]
-  // ) => {
-  //   return currentWinners.filter(
-  //     (cw) => !previousWinners.some((pw) => pw.id === cw.id)
-  //   );
-  // };
 
   const checkForWinner = async (balls: number[]) => {
     if (!isGameStarted) return;
@@ -297,11 +294,7 @@ const BingoGamePage: React.FC = () => {
                   <div className="btn-action-on">
                     <AppButton
                       className={`${
-                        isGameStarted
-                          ? gameRandom
-                            ? "power-on selected"
-                            : "power-on"
-                          : "power-on disabled"
+                        gameRandom ? "power-on selected" : "power-on"
                       }`}
                       icon="power-off"
                       onClick={handleGameRandom}
@@ -310,10 +303,15 @@ const BingoGamePage: React.FC = () => {
                       }
                     ></AppButton>
                   </div>
+
                   <div className="btn-action-off">
                     <AppButton
                       className={`${
-                        !gameRandom ? "power-off selected" : "power-off"
+                        isGameStarted
+                          ? !gameRandom
+                            ? "power-off selected"
+                            : "power-off"
+                          : "power-off disabled"
                       }`}
                       icon="power-off"
                       onClick={handleGameRandom}
@@ -324,11 +322,11 @@ const BingoGamePage: React.FC = () => {
               </div>
             </div>
             <AppButton
-              className={`${gameRandom ? "mt-3" : "mt-3 disabled"}`}
-              disabled={!gameRandom}
+              className={`${isGameStarted ? (gameRandom ? "mt-3" : "mt-3 disabled") : "mt-3 disabled"}`}
+              disabled={isGameStarted ? (gameRandom ? false : true) : true }
               onClick={drawNumber}
               id="btn-game-random"
-              label="Random"
+              label="Nueva Balota"
             />
           </div>
           <div className="d-flex flex-column gap-3 align-items-center">
