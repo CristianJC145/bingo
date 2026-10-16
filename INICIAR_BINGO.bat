@@ -46,17 +46,17 @@ if /I "%~1"=="--check" (
 rem ---------------------------------------------------------------
 rem  2. Dependencias de npm
 rem ---------------------------------------------------------------
-if not exist "%SERVER_DIR%\node_modules\mysql2" (
+if not exist "%SERVER_DIR%\node_modules\mysql2\package.json" (
   echo  [2/6] Instalando dependencias del servidor...
-  call npm.cmd install --prefix "%SERVER_DIR%"
+  call :npm_install "%SERVER_DIR%" "%SERVER_DIR%\node_modules\mysql2\package.json"
   if errorlevel 1 goto :install_error
 ) else (
   echo  [2/6] Dependencias del servidor listas.
 )
 
-if not exist "%CLIENT_DIR%\node_modules\vite" (
-  echo  [3/6] Instalando dependencias del cliente...
-  call npm.cmd install --prefix "%CLIENT_DIR%"
+if not exist "%CLIENT_DIR%\node_modules\vite\package.json" (
+  echo  [3/6] Instalando dependencias del cliente ^(puede tardar unos minutos^)...
+  call :npm_install "%CLIENT_DIR%" "%CLIENT_DIR%\node_modules\vite\package.json"
   if errorlevel 1 goto :install_error
 ) else (
   echo  [3/6] Dependencias del cliente listas.
@@ -132,6 +132,20 @@ timeout /t 3 /nobreak >nul
 exit /b 0
 
 rem ---------------------------------------------------------------
+rem  npm install dentro de la carpeta, con un reintento. El segundo argumento es
+rem  un archivo que debe existir al terminar; si no, la instalacion fallo.
+:npm_install
+pushd "%~1"
+call npm.cmd install --no-audit --no-fund
+if not exist "%~2" (
+  echo  La instalacion fallo. Verificando cache de npm y reintentando...
+  call npm.cmd cache verify >nul 2>&1
+  call npm.cmd install --no-audit --no-fund
+)
+popd
+if not exist "%~2" exit /b 1
+exit /b 0
+
 :port_open
 powershell.exe -NoProfile -Command "$c=New-Object Net.Sockets.TcpClient; try { $c.Connect('127.0.0.1', %~1); $c.Close(); exit 0 } catch { exit 1 }" >nul 2>&1
 exit /b %errorlevel%
