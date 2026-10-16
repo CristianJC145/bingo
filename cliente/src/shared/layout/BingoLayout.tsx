@@ -1,46 +1,24 @@
-import React, { ReactNode, useState } from "react";
+import React, { ReactNode, useCallback, useState } from "react";
 import styled from "styled-components";
-
 import AppSidebar from "./AppSidebar";
 import AppFooter from "./AppFooter";
 import AppNavbar from "./AppNavbar";
 
-interface BingoLayoutProps {
-  children: ReactNode;
-  namePage: string;
-  routePage: string;
-  level?: number;
-}
+interface BingoLayoutProps { children: ReactNode; namePage: string; routePage: string; level?: number; }
 
 const BingoLayout: React.FC<BingoLayoutProps> = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [smallSidebar, setSmallSidebar] = useState<unknown>();
-
-  const onSmallSidebar = (value: unknown) => {
-    setSmallSidebar(value);
-  };
-
-  const handleSidebarClose = () => {
-    setIsSidebarOpen(false);
-  };
-
-  const toggleSidebar = () => {
-    setIsSidebarOpen((prev) => !prev);
-  };
+  const [smallSidebar, setSmallSidebar] = useState(false);
+  const closeSidebar = useCallback(() => setIsSidebarOpen(false), []);
+  const toggleSidebar = useCallback(() => setIsSidebarOpen((value) => !value), []);
 
   return (
     <BingoLayoutStyles>
-      <AppSidebar
-        isOpen={isSidebarOpen}
-        onClose={handleSidebarClose}
-        onSmallSidebar={onSmallSidebar}
-      ></AppSidebar>
-      <main
-        className={`vs-main-content ${smallSidebar ? "small-sidebar" : ""}`}
-      >
-        <AppNavbar toggleSidebar={toggleSidebar}></AppNavbar>
-        <div className="vs-content">{children}</div>
-        <AppFooter></AppFooter>
+      <AppSidebar isOpen={isSidebarOpen} onClose={closeSidebar} onSmallSidebar={setSmallSidebar} />
+      <main className={`main-shell ${smallSidebar ? "small-sidebar" : ""}`}>
+        <AppNavbar toggleSidebar={toggleSidebar} />
+        <div className="page-content">{children}</div>
+        <AppFooter />
       </main>
     </BingoLayoutStyles>
   );
@@ -49,25 +27,7 @@ const BingoLayout: React.FC<BingoLayoutProps> = ({ children }) => {
 export default BingoLayout;
 
 const BingoLayoutStyles = styled.div`
-  .vs-main-content {
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-  }
-  .vs-content {
-    flex-grow: 1;
-    margin: 0 var(--p-6);
-  }
-  @media (min-width: 992px) {
-    .vs-content {
-      padding: 0 var(--p-6);
-    }
-    .vs-main-content {
-      margin-left: 220px;
-      transition: all 0.3s ease;
-    }
-    .vs-main-content.small-sidebar {
-      margin-left: 72px;
-    }
-  }
+  .main-shell { display: flex; min-height: 100vh; flex-direction: column; transition: margin-left .25s ease; }
+  .page-content { width: 100%; max-width: 1640px; flex: 1; align-self: center; padding: 1.5rem clamp(1rem, 3vw, 2.5rem) 2rem; }
+  @media (min-width: 992px) { .main-shell { margin-left: 260px; } .main-shell.small-sidebar { margin-left: 86px; } .page-content { padding-top: 1.25rem; } }
 `;

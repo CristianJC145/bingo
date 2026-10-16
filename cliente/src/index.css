@@ -1,87 +1,112 @@
+@font-face {
+  font-family: "Poppins";
+  src: url("../src/assets/fonts/Poppins-Regular.ttf");
+  font-weight: 400;
+}
+
+@font-face {
+  font-family: "Poppins";
+  src: url("../src/assets/fonts/Poppins-Medium.ttf");
+  font-weight: 600;
+}
+
+@font-face {
+  font-family: "Poppins";
+  src: url("../src/assets/fonts/Poppins-Bold.ttf");
+  font-weight: 700;
+}
+
+@font-face {
+  font-family: "Roboto";
+  src: url("../src/assets/fonts/Roboto-Regular.ttf");
+  font-weight: 400;
+}
+
 :root {
-  line-height: 1.5;
-  font-weight: 500;
-  font-size: 14px;
-
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-
+  color: var(--text-primary);
+  background: var(--bg-page);
+  font-family: "Roboto", sans-serif;
+  font-size: 15px;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  -webkit-text-size-adjust: 100%;
 }
 
-a {
-  font-weight: 400;
-  color: var(--color-primary);
-  text-decoration: inherit;
-}
-a:hover {
-  color: var(--color-primary);
+* {
+  box-sizing: border-box;
 }
 
-@font-face {
-  font-family: 'Poppins';
-  src: url('../src/assets/fonts/Poppins-Light.ttf');
-  font-weight: 400;
-  font-style: normal;
-}
-@font-face {
-  font-family: 'Poppins';
-  src: url('../src/assets/fonts/Poppins-Regular.ttf');
-  font-weight: 500;
-  font-style: normal;
-}
-@font-face {
-  font-family: 'Poppins';
-  src: url('../src/assets/fonts/Poppins-Medium.ttf');
-  font-weight: 600;
-  font-style: normal;
-}
-@font-face {
-  font-family: 'Poppins';
-  src: url('../src/assets/fonts/Poppins-Bold.ttf');
-  font-weight: 700;
-  font-style: normal;
-}
-@font-face {
-  font-family: 'Poppins';
-  src: url('../src/assets/fonts/Poppins-Black.ttf');
-  font-weight: 900;
-  font-style: normal;
-}
-
-
-
-@font-face {
-  font-family: 'Roboto';
-  src: url('../src/assets/fonts/Roboto-Light.ttf');
-  font-weight: 300;
-  font-style: normal;
-}
-@font-face {
-  font-family: 'Roboto';
-  src: url('../src/assets/fonts/Roboto-Regular.ttf');
-  font-weight: 400;
-  font-style: normal;
-}
-@font-face {
-  font-family: 'Roboto';
-  src: url('../src/assets/fonts/Roboto-Medium.ttf');
-  font-weight: 500;
-  font-style: normal;
+html {
+  min-width: 320px;
+  min-height: 100%;
+  background: var(--bg-page);
 }
 
 body {
   margin: 0;
+  min-width: 320px;
   min-height: 100vh;
-  font-family: 'Roboto', sans-serif !important;
-  background-color: #15143c !important;
+  color: var(--text-primary) !important;
+  background:
+    radial-gradient(circle at 78% -10%, rgba(124, 92, 255, 0.13), transparent 32rem),
+    radial-gradient(circle at 8% 92%, rgba(39, 211, 178, 0.06), transparent 28rem),
+    var(--bg-page) !important;
+}
+
+body::before {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  content: "";
+  opacity: 0.16;
+  pointer-events: none;
+  background-image: linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px);
+  background-size: 56px 56px;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+a {
+  color: var(--color-primary);
+  text-decoration: none !important;
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: 'Poppins', sans-serif !important;
+  font-family: "Poppins", sans-serif !important;
+  letter-spacing: -0.025em;
 }
 
+::selection {
+  color: #fff;
+  background: rgba(var(--color-primary-rgb), 0.7);
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #303747;
+  border-radius: 99px;
+}
+
+#root {
+  min-height: 100vh;
+}

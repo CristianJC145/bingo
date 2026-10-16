@@ -1051,6 +1051,47 @@ insert  into `bingofigures`(`id`,`name`,`pattern`) values
 (5,'Vertical Letra O','[[false,false,false,false,true],[false,false,false,false,true],[false,false,false,false,true],[false,false,false,false,true],[false,false,false,false,true]]'),
 (6,'Cruz','[[false,false,true,false,false],[false,false,true,false,false],[true,true,false,true,true],[false,false,true,false,false],[false,false,true,false,false]]');
 
+/* Municipios habilitados para competir. Todos comienzan activos. */
+
+DROP TABLE IF EXISTS `bingo_game_municipalities`;
+
+CREATE TABLE `bingo_game_municipalities` (
+  `municipio` varchar(40) NOT NULL,
+  `enabled` tinyint(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY (`municipio`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+insert into `bingo_game_municipalities` (`municipio`,`enabled`) values
+('COLON',1),('SAN_FRANCISCO',1),('SANTIAGO',1),('SIBUNDOY',1),('MOCOA',1),
+('PUERTO_GUZMAN',1),('VILLAGARZON',1),('ORITO',1),('PUERTO_ASIS',1),
+('PUERTO_CAICEDO',1),('PUERTO_LEGUIZAMO',1),('SAN_MIGUEL',1),('VALLE_DEL_GUAMUEZ',1);
+
+/* Condiciones de discapacidad habilitadas. Todas comienzan activas. */
+
+DROP TABLE IF EXISTS `bingo_game_disabilities`;
+
+CREATE TABLE `bingo_game_disabilities` (
+  `disability_type` varchar(30) NOT NULL,
+  `enabled` tinyint(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY (`disability_type`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+insert into `bingo_game_disabilities` (`disability_type`,`enabled`) values
+('SIN_DISCAPACIDAD',1),('FISICA',1),('VISUAL',1),('AUDITIVA',1),('INTELECTUAL',1),
+('PSICOSOCIAL',1),('SORDOCEGUERA',1),('MULTIPLE',1),('SINDROME_DOWN',1);
+
+/* Estados de cuidador habilitados. Ambos comienzan activos. */
+
+DROP TABLE IF EXISTS `bingo_game_caregivers`;
+
+CREATE TABLE `bingo_game_caregivers` (
+  `caregiver_status` varchar(5) NOT NULL,
+  `enabled` tinyint(1) NOT NULL DEFAULT 1,
+  PRIMARY KEY (`caregiver_status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+insert into `bingo_game_caregivers` (`caregiver_status`,`enabled`) values ('SI',1),('NO',1);
+
 /*Table structure for table `metadata` */
 
 DROP TABLE IF EXISTS `metadata`;

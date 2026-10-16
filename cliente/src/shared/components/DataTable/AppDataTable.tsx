@@ -1,5 +1,4 @@
-// src/DataTable/AppDataTable.tsx
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import styled from "styled-components";
 import AppButton from "../Buttons/AppButton";
 
@@ -10,220 +9,70 @@ interface Column {
   columnClassName?: string;
   truncate?: boolean;
   maxChars?: number;
-  Cell?: (props: { value: any }) => React.ReactNode;
+  Cell?: (props: { value: unknown }) => React.ReactNode;
 }
 
+interface DataResult { data: unknown[]; total: number; perPage?: number; }
+interface DataService { run: (params?: Record<string, unknown>) => Promise<DataResult>; }
 interface AppDataTableProps {
   columns: Column[];
-  service: any;
-  params?: {
-    id: number;
-  };
-  onRowClick?: (row: any) => void;
+  service: DataService;
+  params?: Record<string, unknown>;
+  onRowClick?: (row: unknown) => void;
   selectedRowId?: number | null;
-  children?: React.ReactNode
+  searchPlaceholder?: string;
+  children?: React.ReactNode;
 }
 
-const AppDataTable: React.FC<AppDataTableProps> = ({
-  columns,
-  service,
-  params,
-  onRowClick,
-  selectedRowId,
-  children
-}) => {
-  const [data, setData] = useState<any[]>([]);
+const AppDataTable: React.FC<AppDataTableProps> = ({ columns, service, params, onRowClick, selectedRowId, searchPlaceholder, children }) => {
+  const [data, setData] = useState<unknown[]>([]);
   const [loading, setLoading] = useState(true);
-  const [pagination, setPagination] = useState({
-    page: 1,
-    perPage: 10,
-    total: 0,
-  });
-  const pageIndex = pagination.page - 1;
-  const pageSize = 10;
-
+  const [pagination, setPagination] = useState({ page: 1, perPage: 10, total: 0 });
   const [search, setSearch] = useState("");
-  const firstRecord = data?.length === 0 ? 0 : pageIndex * pageSize + 1;
-  const lastRecord = data?.length === 0 ? 0 : firstRecord - 1 + data?.length;
 
-  const totalPages = Math.ceil(pagination.total / pagination.perPage);
-  const pages = Array.from({ length: totalPages }, (_, index) => index + 1);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      const result = await service.run({
-        ...params,
-        page: pagination.page,
-        perPage: pagination.perPage,
-        search,
-      });
-      
-      const { data, page, perPage, total } = result;
-      setData(data);
-      setPagination((prevPagination) => ({
-        ...prevPagination,
-        total: total,
-      }));
+      const result = await service.run({ ...params, page: pagination.page, perPage: pagination.perPage, search });
+      setData(result.data);
+      setPagination((current) => ({ ...current, total: result.total }));
     } catch (error) {
       console.error("Error al obtener datos:", error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [pagination.page, pagination.perPage, params, search, service]);
 
-  useEffect(() => {
-    fetchData();
-  }, [pagination.page, pagination.perPage, search, service]);
+  useEffect(() => { fetchData(); }, [fetchData]);
 
-  const handlePageChange = (newPageIndex: number) => {
-    if (pagination.page !== newPageIndex) {
-      setPagination((prevPagination) => ({
-        ...prevPagination,
-        page: newPageIndex,
-      }));
+  const totalPages = Math.max(1, Math.ceil(pagination.total / pagination.perPage));
+  const firstRecord = data.length === 0 ? 0 : (pagination.page - 1) * pagination.perPage + 1;
+  const lastRecord = data.length === 0 ? 0 : firstRecord + data.length - 1;
+  const changePage = (page: number) => setPagination((current) => ({ ...current, page: Math.min(totalPages, Math.max(1, page)) }));
+
+  const renderCell = (row: Record<string, unknown>, column: Column) => {
+    if (column.accessor) {
+      const value = row[column.accessor];
+      if (column.truncate && column.maxChars && typeof value === "string" && value.length > column.maxChars) return `${value.slice(0, column.maxChars)}…`;
+      return React.isValidElement(value) || ["string", "number"].includes(typeof value) ? value as React.ReactNode : "";
     }
+    return column.Cell?.({ value: row }) ?? null;
   };
 
   return (
     <AppDataTableStyle>
-      <div className="d-flex align-items-center justify-content-between gap-md-4">
-        <section className="vs-section-search-bar px-0">
-          <div className="vs-search-bar py-0  col-12 col-sm-6">
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Buscar..."
-            />
-            <AppButton
-              icon="search"
-              variant="light"
-              className="cursor-pointer"
-            ></AppButton>
-          </div>
-          { children }
-        </section>
-        <div
-          className="d-flex gap-2 text-nowrap align-items-center"
-          style={{ color: "var(--color-gray-300)" }}
-        >
-          <span className="d-none d-md-block text-light">Filas por Página</span>
-          <select
-            value={pagination.perPage}
-            onChange={(e) =>
-              setPagination({
-                ...pagination,
-                perPage: Number(e.target.value),
-                page: 1,
-              })
-            }
-            className="form-select ms-4 ms-lg-0 me-1 me-sm-0"
-            style={{ padding: "0.675rem var(--p-8) 0.675rem var(--p-4)" }}
-          >
-            {[10, 20, 30, 40, 50].map((pageSize) => (
-              <option key={pageSize} value={pageSize}>
-                {pageSize}
-              </option>
-            ))}
-          </select>
-        </div>
+      <div className="table-toolbar">
+        <div className="search-group"><div className="search-box"><input type="text" value={search} onChange={(event) => setSearch(event.target.value)} placeholder={searchPlaceholder ?? "Buscar figura…"} /><AppButton icon="search" variant="light" ariaLabel="Buscar" /></div>{children}</div>
+        <label className="page-size"><span>Filas</span><select value={pagination.perPage} onChange={(event) => setPagination({ ...pagination, perPage: Number(event.target.value), page: 1 })}>{[10,20,30,40,50].map((size) => <option key={size} value={size}>{size}</option>)}</select></label>
       </div>
-      <div className="overflow-auto">
+      <div className="table-overflow">
+        {loading && <div className="loading-bar"><span /></div>}
         <table className="vs-dataTable">
-          <thead>
-            <tr>
-              {columns.map((column) => (
-                <th key={column.Header} className={column.HeaderClassName}>
-                  {column.Header}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          {data?.length === 0 ? (
-            <tbody>
-              <tr>
-                <td colSpan={6}>
-                  <h3 className="text-center">No se encontraron resultados.</h3>
-                </td>
-              </tr>
-            </tbody>
-          ) : (
-            <tbody>
-              {data.map((row, rowIndex) => (
-                <tr className={`${selectedRowId === row.id ? 'selected' : ''}`} key={rowIndex} onClick={() => onRowClick && onRowClick(row)}>
-                  {columns.map((column, colIndex) => (
-                    <td
-                      key={colIndex}
-                      className={column.columnClassName}
-                      width="200"
-                    >
-                      {column.accessor
-                        ? column.truncate && column.maxChars
-                          ? row[column.accessor].length > column.maxChars
-                            ? `${row[column.accessor].slice(
-                                0,
-                                column.maxChars
-                              )}...`
-                            : row[column.accessor]
-                          : row[column.accessor]
-                        : column.Cell
-                        ? column.Cell({ value: row })
-                        : null}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          )}
+          <thead><tr>{columns.map((column) => <th key={column.Header} className={column.HeaderClassName}>{column.Header}</th>)}</tr></thead>
+          <tbody>{data.length === 0 ? <tr><td colSpan={columns.length}><div className="empty-table">{loading ? "Cargando figuras…" : "No se encontraron resultados."}</div></td></tr> : data.map((rawRow, rowIndex) => { const row = rawRow as Record<string, unknown>; return <tr className={selectedRowId === Number(row.id) ? "selected" : ""} key={String(row.id ?? rowIndex)} onClick={() => onRowClick?.(rawRow)}>{columns.map((column, columnIndex) => <td key={`${column.Header}-${columnIndex}`} className={column.columnClassName}>{renderCell(row, column)}</td>)}</tr>; })}</tbody>
         </table>
       </div>
-      <div className="d-flex align-items-center justify-content-between flex-column flex-md-row gap-3 mt-3">
-        <div className="d-flex align-items-center gap-1 gap-sm-3">
-          <AppButton
-            onClick={() => handlePageChange(1)}
-            disabled={pagination.page === 1}
-            icon={"angle-double-left"}
-            variant="dark"
-          ></AppButton>
-          <AppButton
-            onClick={() => handlePageChange(pagination.page - 1)}
-            disabled={pagination.page === 1}
-            icon={"angle-left"}
-            variant="dark"
-          ></AppButton>
-          <div className="d-flex gap-2 gap-sm-4">
-            {pages.map((page, index) => (
-              <AppButton
-                key={index}
-                onClick={() => handlePageChange(page)}
-                disabled={pagination.page === page}
-                label={`${index + 1}`}
-                className={`py-2 px-3 ${
-                  pagination.page === page ? "text-white" : "text-dark"
-                }`}
-                variant={pagination.page === page ? "primary" : "white"}
-              ></AppButton>
-            ))}
-          </div>
-          <AppButton
-            onClick={() => handlePageChange(pagination.page + 1)}
-            disabled={pagination.page === totalPages}
-            icon={"angle-right"}
-            variant="dark"
-          ></AppButton>
-          <AppButton
-            onClick={() => handlePageChange(totalPages)}
-            disabled={pagination.page === totalPages}
-            icon={"angle-double-right"}
-            variant="dark"
-          ></AppButton>
-        </div>
-
-        <span style={{ color: "var(--color-gray-300)" }}>
-          Mostrando {firstRecord} a {lastRecord} de {pagination.total} registros
-        </span>
-      </div>
+      <div className="table-footer"><span>Mostrando {firstRecord}–{lastRecord} de {pagination.total}</span><div className="pagination"><AppButton onClick={() => changePage(pagination.page - 1)} disabled={pagination.page === 1} icon="angle-left" variant="light" /><strong>{pagination.page} / {totalPages}</strong><AppButton onClick={() => changePage(pagination.page + 1)} disabled={pagination.page === totalPages} icon="angle-right" variant="light" /></div></div>
     </AppDataTableStyle>
   );
 };
@@ -231,34 +80,21 @@ const AppDataTable: React.FC<AppDataTableProps> = ({
 export default AppDataTable;
 
 const AppDataTableStyle = styled.div`
-  .vs-section-search-bar {
-    display: flex;
-    flex: 1 1 auto;
-    align-items: center;
-    padding: var(--p-2) var(--p-4);
-    color: #fff;
-    background-color: transparent;
-  }
-  .vs-search-bar {
-    display: flex;
-    align-items: center;
-    gap: .5rem;
-  }
-  .vs-search-bar input[type="text"] {
-    padding: var(--p-3);
-    border: none;
-    flex-grow: 1;
-    width: 100%;
-    height: 100%;
-    background-color: #27284a;
-    border-radius: 6px;
-    color: rgb(110, 110, 110);
-  }
-  .vs-search-bar input:hover, .vs-search-bar input:focus{
-    box-shadow: 0 0 8px rgba(0, 0, 0 , .2);
-  }
-  .vs-search-bar input[type="text"]:focus-visible {
-    outline: none;
-  }
+  .table-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: .8rem; }
+  .search-group { display: flex; flex: 1; align-items: center; gap: .6rem; }
+  .search-box { display: flex; width: min(100%, 320px); align-items: center; gap: .25rem; }
+  .search-box input { width: 100%; padding: .7rem .8rem; color: var(--text-primary); background: var(--bg-soft); border: 1px solid var(--border-subtle); border-radius: 10px; outline: 0; }
+  .search-box input:focus { border-color: rgba(var(--color-primary-rgb),.55); box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb),.1); }
+  .page-size { display: flex; align-items: center; gap: .5rem; color: var(--text-muted); font-size: .62rem; }
+  .page-size select { padding: .55rem 1.7rem .55rem .65rem; color: var(--text-primary); background: var(--bg-soft); border: 1px solid var(--border-subtle); border-radius: 9px; }
+  .table-overflow { position: relative; overflow: auto; }
+  .loading-bar { position: absolute; top: 0; left: 0; width: 100%; height: 2px; overflow: hidden; background: rgba(255,255,255,.04); }
+  .loading-bar span { display: block; width: 35%; height: 100%; background: var(--color-primary); animation: loading 1s ease-in-out infinite alternate; }
+  .empty-table { padding: 2rem; color: var(--text-muted); font-size: .72rem; text-align: center; }
+  .table-footer { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-top: .9rem; color: var(--text-muted); font-size: .62rem; }
+  .pagination { display: flex; align-items: center; gap: .5rem; }
+  .pagination .vs-btn { width: 32px; min-height: 32px; }
+  .pagination strong { min-width: 48px; color: var(--text-secondary); font-size: .62rem; text-align: center; }
+  @keyframes loading { to { transform: translateX(185%); } }
+  @media (max-width: 620px) { .table-toolbar { align-items: flex-start; flex-direction: column; } .search-group { width: 100%; } .table-footer { align-items: flex-start; flex-direction: column; } }
 `;
-

@@ -1,222 +1,51 @@
-import { useEffect, useState } from "react";
-import AppButton from "../../../shared/components/Buttons/AppButton";
-import AppIcon from "../../../shared/components/AppIcon";
+import { useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
+import AppButton from "../../../shared/components/Buttons/AppButton";
+import BingoCardVisual from "../../../shared/components/BingoCardVisual";
 
-interface Figure {
-    id: number;
-    name: string;
-    pattern: boolean[][];
-}
-interface FigureSelectorModalProps {
-    onClose: () => void;
-    figures: Figure[];
-    selectedFigures: number[];
-    onSelectFigures: (selectedFigures: number[]) => void;
-}
-const FigureSelectorModal: React.FC<FigureSelectorModalProps> = ({ onClose, figures, onSelectFigures, selectedFigures}) => {
-  const [localSelectedFigures, setLocalSelectedFigures] = useState<number[]>(selectedFigures);  
-  const [selectedIds, setSelectedIds] = useState<number[]>([]);
-    const [pattern, setPattern] = useState<boolean[][]>(
-      Array(5).
-      fill(Array(5).fill(false))
-    );
-    const toggleFigureSelection = (figureId: number) => {
-      setLocalSelectedFigures((prevSelected: number[]) => 
-        prevSelected.includes(figureId) 
-          ? prevSelected.filter(id => id !== figureId) 
-          : [...prevSelected, figureId]
-      );
-    };
-    const handleSave = () => {
-      onSelectFigures(localSelectedFigures);
-      onClose();
-    };
-    const handleRowClick = (figure: Figure) => {
-      setPattern(figure.pattern);
-      setSelectedIds((prevSelected) =>
-        prevSelected.includes(figure.id)
-          ? prevSelected.filter((selectedId) => selectedId !== figure.id)
-          : [...prevSelected, figure.id]
-      );
-    };
-    useEffect(() => {
-      if (selectedFigures) {
-        setSelectedIds(selectedFigures);
-      }
-      setLocalSelectedFigures(selectedFigures);
-    },[selectedFigures]);
-    return (
-      <FigureSelectorModalStyle>
-        <div className="modal-main-content">
-          <div className="content-list">
-            {figures.map(figure => (
-              <div className={`list-item ${selectedIds.includes(figure.id) ? "selected" : ""}`} key={figure.id}>
-                <input
-                  type="checkbox"
-                  checked={localSelectedFigures.includes(figure.id)}
-                  onChange={() => toggleFigureSelection(figure.id)}
-                  onClick={()=> handleRowClick(figure)}
-                  className="form-check-input"
-                  id={`${figure.id}`}
-                />
-                <label className="item-name" htmlFor={`${figure.id}`}>{(figure.name)}</label>
-              </div>
-            ))}
-          </div>
+interface Figure { id: number; name: string; pattern: boolean[][]; }
+interface FigureSelectorModalProps { onClose: () => void; figures: Figure[]; selectedFigures: number[]; onSelectFigures: (selectedFigures: number[]) => void; }
+const emptyPattern = () => Array.from({ length: 5 }, () => Array(5).fill(false));
 
-          <div>
-            <div className="m-side-table">
-              <div className="m-table-header">
-                <h4>B</h4>
-                <h4>I</h4>
-                <h4>N</h4>
-                <h4>G</h4>
-                <h4>O</h4>
-              </div>
-              
-              <div className="m-table-content">
-                {pattern.map((row: boolean[], rowIndex: number) =>
-                  row.map((cell: boolean, cellIndex: number) => (
-                      <div
-                        key={`${rowIndex}-${cellIndex}`}
-                        className={`${
-                        rowIndex === 2 && cellIndex === 2
-                          ? "m-free"
-                          : cell
-                          ? "m-cell filled"
-                          : "m-cell"
-                        }`}
-                      >
-                        {rowIndex === 2 && cellIndex === 2 ? (
-                          <span>FREE</span>
-                        ) : cell ? (
-                          <AppIcon icon="star"></AppIcon>
-                        ) : (
-                          ""
-                        )}
-                      </div>
-                  ))
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <div className="figure-action">
-          <AppButton className="text-white" variant="transparent" onClick={onClose}>Cancelar</AppButton>
-          <AppButton onClick={handleSave}>Guardar</AppButton>
-        </div>
-      </FigureSelectorModalStyle>
-    )
-}
+const FigureSelectorModal: React.FC<FigureSelectorModalProps> = ({ onClose, figures, onSelectFigures, selectedFigures }) => {
+  const [localSelected, setLocalSelected] = useState<number[]>(selectedFigures);
+  const [previewId, setPreviewId] = useState<number | null>(selectedFigures[0] ?? figures[0]?.id ?? null);
+  useEffect(() => { setLocalSelected(selectedFigures); }, [selectedFigures]);
+  const preview = useMemo(() => figures.find((figure) => figure.id === previewId), [figures, previewId]);
+
+  const toggleSelection = (id: number) => setLocalSelected((current) => current.includes(id) ? current.filter((item) => item !== id) : [...current, id]);
+  const handleSave = () => { onSelectFigures(localSelected); onClose(); };
+
+  return (
+    <FigureSelectorModalStyle>
+      <div className="selector-layout">
+        <div className="figure-list"><div className="list-heading"><span>Biblioteca</span><small>{localSelected.length} seleccionada{localSelected.length === 1 ? "" : "s"}</small></div>{figures.map((figure) => <div className={`list-item ${previewId === figure.id ? "previewing" : ""}`} key={figure.id} onClick={() => setPreviewId(figure.id)}><input type="checkbox" checked={localSelected.includes(figure.id)} onChange={() => toggleSelection(figure.id)} onClick={(event) => event.stopPropagation()} aria-label={`Seleccionar ${figure.name}`} /><span>{figure.name}</span><b>{previewId === figure.id ? "Vista" : ""}</b></div>)}</div>
+        <div className="modal-preview"><div className="preview-heading"><div><span>Vista previa</span><strong>{preview?.name ?? "Selecciona una figura"}</strong></div>{preview && <small>ID {preview.id}</small>}</div><div className="pattern-card"><BingoCardVisual selected={preview?.pattern ?? emptyPattern()} cardId={preview?.id} label="Patrón seleccionado" compact /></div><p>Puedes seleccionar varias figuras para comprobarlas simultáneamente durante la partida.</p></div>
+      </div>
+      <div className="selector-actions"><AppButton variant="transparent" label="Cancelar" onClick={onClose} /><AppButton icon="check" label="Aplicar selección" onClick={handleSave} disabled={localSelected.length === 0} /></div>
+    </FigureSelectorModalStyle>
+  );
+};
+
 export default FigureSelectorModal;
 
 const FigureSelectorModalStyle = styled.div`
-  .modal-figure-content {
-    display: flex;
-  }
-  .modal-main-content {
-    display: flex;
-    padding-top: 1rem;
-    gap: 1.5rem;
-  }
-  .m-table-header {
-    display: flex;
-    justify-content: space-between;
-    margin-top: .5rem;
-    margin-bottom: .5rem;
-    color: var(--color-body);
-  }
-  .m-table-header h4 {
-    width: 60px;
-    text-align: center;
-    margin-bottom: 0;
-  }
-  .m-side-table {
-    background-color: var(--color-primary);
-    border-radius: 8px;
-    padding: .5rem;
-    height: fit-content;
-  }
-  .m-table-content {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    row-gap: .2rem;
-  }
-  .m-cell {
-    background-color: var(--color-body);
-    color: var(--color-primary);
-    border-radius: 8px;
-    display: inline-block;
-    width: 50px;
-    height: 50px;
-    margin: 0.2rem;
-  }
-  .m-cell.filled {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--color-primary);
-  }
-  .m-cell svg {
-    font-size: 24px;
-  }
-  .m-free {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #fff;
-    font-weight: 700;
-    font-size: 18px
-  }
-  .figure-action {
-    display: flex;
-    justify-content: flex-end;
-    border-top: 1px solid rgba(var(--color-gray-300-rgb), .1);
-    padding-top: 1rem;
-    margin-top: 1rem;
-  }
-  .m-table-figure-name {
-    color: var(--color-body);
-    text-align: center;
-    margin-top: .5rem;
-    font-weight: 700;
-  }
-  .content-list {
-    display: flex;
-    flex-direction: column;
-    gap: .5rem;
-    max-height: 350px;
-    max-width: 250px;
-    min-width: 200px;
-    overflow-y: auto;
-  }
-  .list-item {
-    display: flex;
-    align-items: center;
-    gap: .5rem;
-    background-color: #15143c;
-    border-radius: 12px;
-    padding: var(--p-3);
-    width: 95%;
-    opacity: .5;
-  }
-  .list-item.selected {
-    opacity: 1;
-  }
-  .item-name {
-    color: var(--color-light);
-  }
-  .content-list::-webkit-scrollbar {
-    width: 7px;
-  }
-  .content-list::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.5);
-    border-radius: 4px;
-  }
-  .content-list::-webkit-scrollbar-thumb {
-    border-radius: 4px;
-    background-color: #9a98d1;
-  }
-`
+  .selector-layout { display: grid; grid-template-columns: minmax(200px,.7fr) minmax(300px,1fr); gap: 1.25rem; }
+  .figure-list { max-height: 390px; overflow: auto; padding-right: .25rem; }
+  .list-heading { display: flex; justify-content: space-between; margin-bottom: .65rem; color: var(--text-muted); font-size: .6rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+  .list-item { display: grid; grid-template-columns: 18px 1fr auto; align-items: center; gap: .6rem; margin-bottom: .4rem; padding: .72rem; color: var(--text-secondary); background: rgba(255,255,255,.025); border: 1px solid transparent; border-radius: 11px; cursor: pointer; }
+  .list-item:hover, .list-item.previewing { color: #fff; background: rgba(255,255,255,.045); border-color: var(--border-subtle); }
+  .list-item input { width: 15px; height: 15px; accent-color: var(--color-primary); }
+  .list-item span { font-size: .7rem; }
+  .list-item b { color: #ad9cff; font-size: .52rem; text-transform: uppercase; }
+  .modal-preview { padding: 1rem; background: rgba(0,0,0,.16); border: 1px solid var(--border-subtle); border-radius: 16px; }
+  .preview-heading { display: flex; align-items: flex-start; justify-content: space-between; }
+  .preview-heading > div { display: flex; flex-direction: column; }
+  .preview-heading span { color: var(--color-secondary); font-size: .58rem; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; }
+  .preview-heading strong { margin-top: .25rem; font-size: .78rem; }
+  .preview-heading small { color: var(--text-muted); font-size: .55rem; }
+  .pattern-card { display: flex; justify-content: center; margin: 1rem auto; }
+  .modal-preview p { margin: 0; color: var(--text-muted); font-size: .62rem; line-height: 1.5; text-align: center; }
+  .selector-actions { display: flex; justify-content: flex-end; gap: .5rem; margin-top: 1.15rem; padding-top: 1rem; border-top: 1px solid var(--border-subtle); }
+  @media (max-width: 650px) { .selector-layout { grid-template-columns: 1fr; } .figure-list { max-height: 210px; } }
+`;

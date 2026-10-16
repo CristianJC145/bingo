@@ -1,0 +1,183 @@
+-- ================================================================
+-- BINGO - CARGA DE PRUEBA PARA LOS 13 MUNICIPIOS DEL PUTUMAYO
+-- Genera: 13 registradores, 13 bloques de 4.000 y 52.000 registros.
+-- MySQL 8.x / Base de datos: bingo
+--
+-- Todos los usuarios usan inicialmente la contraseña: Bingo2026!
+-- IMPORTANTE: este script está destinado a una base de PRUEBAS.
+-- Al repetirse, reemplaza los registros 1..52000 y las asignaciones
+-- que se crucen con ese rango, pero no elimina administradores.
+-- ================================================================
+
+USE bingo;
+SET NAMES utf8mb4;
+SET FOREIGN_KEY_CHECKS = 1;
+START TRANSACTION;
+
+-- El inventario original tenía ausente este número. Se restaura solo si falta.
+INSERT IGNORE INTO bingocards (id, card) VALUES
+(10506, JSON_ARRAY(
+  JSON_ARRAY(1, 4, 7, 10, 13),
+  JSON_ARRAY(16, 19, 22, 25, 28),
+  JSON_ARRAY(31, 35, 10506, 41, 44),
+  JSON_ARRAY(46, 49, 52, 55, 58),
+  JSON_ARRAY(61, 64, 67, 70, 73)
+));
+
+DROP TEMPORARY TABLE IF EXISTS seed_municipios;
+CREATE TEMPORARY TABLE seed_municipios (
+  orden TINYINT UNSIGNED NOT NULL PRIMARY KEY,
+  municipio VARCHAR(40) NOT NULL,
+  username VARCHAR(60) NOT NULL,
+  nombre_responsable VARCHAR(120) NOT NULL,
+  inicio INT NOT NULL,
+  fin INT NOT NULL
+);
+
+INSERT INTO seed_municipios (orden, municipio, username, nombre_responsable, inicio, fin) VALUES
+( 1, 'COLON',              'reg_demo_colon',              'Ana Lucía Burbano',          1,  4000),
+( 2, 'SAN_FRANCISCO',      'reg_demo_san_francisco',      'Carlos Andrés Jojoa',     4001,  8000),
+( 3, 'SANTIAGO',           'reg_demo_santiago',           'Diana Marcela Chindoy',   8001, 12000),
+( 4, 'SIBUNDOY',           'reg_demo_sibundoy',           'Luis Fernando Jacanamijoy',12001, 16000),
+( 5, 'MOCOA',              'reg_demo_mocoa',              'María Fernanda Mavisoy',  16001, 20000),
+( 6, 'PUERTO_GUZMAN',      'reg_demo_puerto_guzman',      'Jorge Eliécer Mutumbajoy',20001, 24000),
+( 7, 'VILLAGARZON',        'reg_demo_villagarzon',        'Sandra Milena Narváez',   24001, 28000),
+( 8, 'ORITO',              'reg_demo_orito',              'Andrés Felipe Criollo',   28001, 32000),
+( 9, 'PUERTO_ASIS',        'reg_demo_puerto_asis',        'Luz Marina Rosero',       32001, 36000),
+(10, 'PUERTO_CAICEDO',     'reg_demo_puerto_caicedo',     'Óscar Javier Portilla',   36001, 40000),
+(11, 'PUERTO_LEGUIZAMO',   'reg_demo_puerto_leguizamo',   'Claudia Patricia Erazo',  40001, 44000),
+(12, 'SAN_MIGUEL',         'reg_demo_san_miguel',         'Miguel Ángel Benavides',  44001, 48000),
+(13, 'VALLE_DEL_GUAMUEZ',  'reg_demo_valle_del_guamuez',  'Paola Andrea Coral',      48001, 52000);
+
+-- Hash bcrypt de la contraseña temporal Bingo2026! (costo 10).
+INSERT INTO users (username, full_name, password_hash, role, active)
+SELECT username, nombre_responsable,
+       '$2b$10$sIlY84yrwpgF73Otw9kJZ.y0HTNNW81sDWhR6vijUUPpPCM9tZMWm',
+       'registrador', 1
+FROM seed_municipios
+ON DUPLICATE KEY UPDATE
+  full_name = VALUES(full_name),
+  password_hash = VALUES(password_hash),
+  role = 'registrador',
+  active = 1;
+
+-- Reinicio controlado del rango de demostración.
+DELETE FROM card_registrations WHERE card_number BETWEEN 1 AND 52000;
+DELETE FROM card_assignments WHERE start_card <= 52000 AND end_card >= 1;
+
+-- Un bloque consecutivo de 4.000 cartones por municipio/registrador.
+INSERT INTO card_assignments (user_id, start_card, end_card, municipio)
+SELECT u.id, m.inicio, m.fin, m.municipio
+FROM seed_municipios m
+JOIN users u ON u.username = m.username
+ORDER BY m.orden;
+
+SET SESSION cte_max_recursion_depth = 60000;
+DROP TEMPORARY TABLE IF EXISTS seed_numeros;
+CREATE TEMPORARY TABLE seed_numeros AS
+WITH RECURSIVE numeros AS (
+  SELECT 1 AS card_number
+  UNION ALL
+  SELECT card_number + 1 FROM numeros WHERE card_number < 52000
+)
+SELECT card_number FROM numeros;
+ALTER TABLE seed_numeros ADD PRIMARY KEY (card_number);
+
+-- 52.000 titulares ficticios con nombres realistas y datos variados.
+-- La distribución no es equitativa: discapacidad, cuidador, desplazamiento,
+-- género, sector y edad cambian de forma determinista según cada cartón.
+INSERT INTO card_registrations (
+  card_number, municipio, nombre_completo, tipo_identificacion,
+  numero_identificacion, genero, fecha_nacimiento, desplazado,
+  contacto, sector, nombre_residencia, discapacidad,
+  tipo_discapacidad, cuidador, adulto_mayor, registered_by
+)
+SELECT
+  p.card_number,
+  p.municipio,
+  CONCAT(
+    CASE
+      WHEN MOD(p.card_number, 31) = 0 THEN ELT(1 + MOD(p.card_number * 7, 10),
+        'Alex', 'Sam', 'Dani', 'Cris', 'Ángel', 'Ariel', 'Cruz', 'Nicol', 'Michell', 'Andrea')
+      WHEN MOD(p.card_number, 2) = 0 THEN ELT(1 + MOD(p.card_number * 11, 20),
+        'María', 'Ana', 'Laura', 'Diana', 'Paola', 'Sandra', 'Claudia', 'Patricia', 'Carolina', 'Valentina',
+        'Natalia', 'Juliana', 'Marcela', 'Andrea', 'Camila', 'Lucía', 'Daniela', 'Sofía', 'Isabella', 'Fernanda')
+      ELSE ELT(1 + MOD(p.card_number * 13, 20),
+        'Juan', 'Carlos', 'Luis', 'José', 'Andrés', 'Miguel', 'Jorge', 'Diego', 'Felipe', 'Santiago',
+        'Daniel', 'David', 'Óscar', 'Ricardo', 'Fernando', 'Alejandro', 'Mateo', 'Sebastián', 'Manuel', 'Nicolás')
+    END,
+    ' ',
+    ELT(1 + MOD(p.card_number * 17, 30),
+      'Rodríguez', 'Martínez', 'Gómez', 'López', 'González', 'Hernández', 'Pérez', 'Díaz', 'Sánchez', 'Ramírez',
+      'Torres', 'Muñoz', 'Rojas', 'Moreno', 'Castro', 'Ortiz', 'Ruiz', 'Álvarez', 'Romero', 'Suárez',
+      'Burbano', 'Jojoa', 'Chindoy', 'Mavisoy', 'Narváez', 'Rosero', 'Portilla', 'Erazo', 'Coral', 'Benavides'),
+    ' ',
+    ELT(1 + MOD(p.card_number * 23, 30),
+      'García', 'Morales', 'Jiménez', 'Herrera', 'Medina', 'Vargas', 'Cabrera', 'Guerrero', 'Mendoza', 'Reyes',
+      'Acosta', 'Cárdenas', 'Valencia', 'Salazar', 'Delgado', 'Paredes', 'Córdoba', 'Quintero', 'Mora', 'Vega',
+      'Criollo', 'Mutumbajoy', 'Jacanamijoy', 'Muchavisoy', 'Jajoy', 'Botina', 'Insuasty', 'Chamorro', 'Zambrano', 'Bastidas')
+  ) AS nombre_completo,
+  IF(TIMESTAMPDIFF(YEAR, p.fecha_nacimiento, CURDATE()) < 18, 'TI', 'CC') AS tipo_identificacion,
+  CAST(1000000000 + p.card_number AS CHAR) AS numero_identificacion,
+  CASE WHEN MOD(p.card_number, 31) = 0 THEN 'OTRO' WHEN MOD(p.card_number, 2) = 0 THEN 'F' ELSE 'M' END AS genero,
+  p.fecha_nacimiento,
+  IF(MOD(p.card_number * 29, 100) < 19, 'SI', 'NO') AS desplazado,
+  CONCAT('3', LPAD(MOD(p.card_number * 7919, 1000000000), 9, '0')) AS contacto,
+  IF(MOD(p.card_number * 37, 100) < 64, 'URBANO', 'RURAL') AS sector,
+  IF(MOD(p.card_number * 37, 100) < 64,
+     CONCAT('Barrio ', ELT(1 + MOD(p.card_number, 12), 'Centro', 'La Esperanza', 'El Jardín', 'San Miguel', 'Los Pinos', 'Villa Nueva', 'El Progreso', 'La Floresta', 'Las Américas', 'El Dorado', 'Primavera', 'Libertad')),
+     CONCAT('Vereda ', ELT(1 + MOD(p.card_number, 12), 'El Paraíso', 'La Florida', 'San Isidro', 'Las Palmas', 'El Cedro', 'Santa Rosa', 'La Unión', 'Buenavista', 'El Diviso', 'La Vega', 'Alto Afán', 'Puerto Limón'))
+  ) AS nombre_residencia,
+  IF(MOD(p.card_number * 41, 100) < 27, 'SI', 'NO') AS discapacidad,
+  IF(MOD(p.card_number * 41, 100) < 27,
+     ELT(1 + MOD(p.card_number * 43, 8), 'FISICA', 'VISUAL', 'AUDITIVA', 'INTELECTUAL', 'PSICOSOCIAL', 'SORDOCEGUERA', 'MULTIPLE', 'SINDROME_DOWN'),
+     NULL) AS tipo_discapacidad,
+  IF(MOD(p.card_number * 47, 100) < 16, 'SI', 'NO') AS cuidador,
+  IF(TIMESTAMPDIFF(YEAR, p.fecha_nacimiento, CURDATE()) >= 60, 'SI', 'NO') AS adulto_mayor,
+  p.user_id
+FROM (
+  SELECT
+    n.card_number,
+    m.municipio,
+    u.id AS user_id,
+    DATE_SUB('2012-12-31', INTERVAL MOD(n.card_number * 137, 29200) DAY) AS fecha_nacimiento
+  FROM seed_numeros n
+  JOIN seed_municipios m ON n.card_number BETWEEN m.inicio AND m.fin
+  JOIN users u ON u.username = m.username
+) p
+ORDER BY p.card_number;
+
+COMMIT;
+
+-- Verificación: deben retornar 13 usuarios, 13 bloques y 52.000 registros.
+SELECT COUNT(*) AS usuarios_demo
+FROM users WHERE username LIKE 'reg_demo_%';
+
+SELECT COUNT(*) AS bloques,
+       SUM(end_card - start_card + 1) AS cartones_asignados
+FROM card_assignments
+WHERE start_card BETWEEN 1 AND 52000;
+
+SELECT COUNT(*) AS cartones_registrados,
+       COUNT(DISTINCT municipio) AS municipios,
+       SUM(discapacidad = 'SI') AS con_discapacidad,
+       SUM(cuidador = 'SI') AS cuidadores,
+       SUM(adulto_mayor = 'SI') AS adultos_mayores
+FROM card_registrations
+WHERE card_number BETWEEN 1 AND 52000;
+
+SELECT
+  a.municipio,
+  u.username,
+  a.start_card,
+  a.end_card,
+  COUNT(r.card_number) AS registrados
+FROM card_assignments a
+JOIN users u ON u.id = a.user_id
+LEFT JOIN card_registrations r ON r.card_number BETWEEN a.start_card AND a.end_card
+WHERE a.start_card BETWEEN 1 AND 52000
+GROUP BY a.id, a.municipio, u.username, a.start_card, a.end_card
+ORDER BY a.start_card;
+
+DROP TEMPORARY TABLE IF EXISTS seed_numeros;
+DROP TEMPORARY TABLE IF EXISTS seed_municipios;

@@ -1,191 +1,52 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 
-interface GameStatsProps {
-  balls: number[];
-  isGameStarted: boolean;
-}
+interface GameStatsProps { balls: number[]; isGameStarted: boolean; startedAt?: number | null; }
 
-const GameStats: React.FC<GameStatsProps> = ({ balls, isGameStarted }) => {
-  const [gameTime, setGameTime] = useState<number>(0);
-  const displayBalls = [...balls.slice(-5)];
-  while (displayBalls.length < 5) {
-    displayBalls.unshift(-1);
-  }
+const GameStats: React.FC<GameStatsProps> = ({ balls, isGameStarted, startedAt }) => {
+  const [gameTime, setGameTime] = useState(() => (startedAt ? Math.max(0, Math.floor((Date.now() - startedAt) / 1000)) : 0));
+  const recentBalls = balls.slice(-5).reverse();
 
-  const formatTime = (time: number): string => {
-    const hours = Math.floor(time / 3600);
-    const minutes = Math.floor(time / 60);
-    const seconds = time % 60;
-    return `${hours < 10 ? "0" : ""}${hours}:${
-      minutes < 10 ? "0" : ""
-    }${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
-  };
   useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (isGameStarted) {
-      timer = setInterval(() => {
-        setGameTime((prevTime) => prevTime + 1);
-      }, 1000);
-    } else {
-      setGameTime(0);
-    }
-    return () => clearInterval(timer);
+    if (!isGameStarted) { setGameTime(0); return; }
+    const timer = window.setInterval(() => setGameTime((time) => time + 1), 1000);
+    return () => window.clearInterval(timer);
   }, [isGameStarted]);
+
+  const formatTime = (time: number) => {
+    const hours = Math.floor(time / 3600);
+    const minutes = Math.floor((time % 3600) / 60);
+    const seconds = time % 60;
+    return [hours, minutes, seconds].map((value) => value.toString().padStart(2, "0")).join(":");
+  };
 
   return (
     <GameStatsStyle>
-      <div className="bingo-header">
-        <div className="header-content">
-          <div className="d-flex flex-column align-items-center gap-2 justify-content-center">
-            <span>Control de Tiempo</span>
-            <div className="box time">{formatTime(gameTime)}</div>
-          </div>
-          <div className="content-balls-played">
-            <small className="balls-played-title">Balotas Jugadas</small>
-            <div className="number-balls">
-              <h4 className="balls-total">{balls.length}</h4>
-            </div>
-          </div>
-          <div className="d-flex flex-column align-items-center gap-2 justify-content-center">
-            <div>Últimas Balotas Cantadas</div>
-            <div className="d-flex gap-2">
-              {displayBalls.map((ball, index) => (
-                <div key={index} className="ball">
-                  {ball === -1 ? "-" : ball}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+      <div className="stats-grid">
+        <div className="stat-item"><span className="stat-kicker">Tiempo de partida</span><strong>{formatTime(gameTime)}</strong><small>{isGameStarted ? "Cronómetro activo" : "En espera"}</small></div>
+        <div className="stat-item primary-stat"><span className="stat-kicker">Balotas jugadas</span><div><strong>{balls.length}</strong><span>/ 75</span></div><small>{Math.round((balls.length / 75) * 100)}% del tablero</small></div>
+        <div className="stat-item recent-stat"><span className="stat-kicker">Últimas cantadas</span><div className="recent-balls">{Array.from({ length: 5 }, (_, index) => <span className={recentBalls[index] ? "filled" : ""} key={index}>{recentBalls[index] ?? "—"}</span>)}</div><small>La más reciente aparece primero</small></div>
       </div>
     </GameStatsStyle>
   );
 };
 
 export default GameStats;
-const GameStatsStyle = styled.div`
-  .bingo-header {
-    border-radius: 12px;
-    margin-bottom: 1rem;
-    max-width: 1500px;
-    margin: 1rem auto;
-  }
-  .header-title {
-    color: rgba(var(--color-light-rgb), 0.6);
-    display: flex;
-    justify-content: space-between;
-    padding: 0 var(--p-4);
-    font-size: small;
-    margin-bottom: 0.5rem;
-  }
-  .header-content {
-    display: flex;
-    padding: 0 var(--p-6);
-    justify-content: space-between;
-    background-color: #1e1d49;
-    border-radius: 8px;
-    color: var(--color-light);
-    height: 90px;
-  }
-  .content-balls-played {
-    display: flex;
-    position: relative;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    background: linear-gradient(110deg, #15143c 0%, rgba(0, 0, 0, 0.05) 100%);
-    width: 350px;
-  }
-  .balls-played-title {
-    position: absolute;
-    top: -25px;
-    z-index: 3;
-    margin-top: 0.325rem;
-    font-size: 0.825rem;
-  }
-  .content-balls-played::after {
-    content: "";
-    position: absolute;
-    right: 0;
-    width: 0;
-    height: 0;
-    border-left: 50px solid transparent;
-    border-right: 50px solid #1e1d49;
-    border-bottom: 90px solid transparent;
-  }
-  .content-balls-played::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    width: 0;
-    height: 0;
-    border-right: 50px solid transparent;
-    border-top: 90px solid #1e1d49;
-  }
-  .box {
-    display: flex;
-    border-radius: 4px;
-    border-style: solid;
-    border-width: 3px;
-  }
-  .time {
-    border-radius: 4px;
-    padding: 0 var(--p-5);
-    font-size: 1.5rem;
-    font-weight: 700;
-    border-image: conic-gradient(
-        rgba(135, 123, 255, 1) 0%,
-        rgb(44, 42, 99) 80%,
-        rgba(96, 86, 238, 1) 100%
-      )
-      2;
-  }
-  .number-balls {
-    display: flex;
-    position: relative;
-    justify-content: center;
-    align-items: center;
-    width: 70px;
-    height: 70px;
-    border-radius: 999px;
-  }
 
-  .balls-total {
-    color: var(--color-light);
-    display: flex;
-    width: 100%;
-    height: 100%;
-    font-size: 1.75rem;
-    font-weight: 700;
-    z-index: 3;
-    margin: 0;
-    justify-content: center;
-    align-items: center;
-    background: radial-gradient(
-      circle at 70% 10%,
-      #ffffff,
-      #6056ee 25%,
-      #1d1c48 60%,
-      #2d0f4b8a 90%
-    );
-    border-radius: 999px;
-    box-shadow: 0 -1px 8px 3px rgb(99, 96, 255);
-    z-index: 3;
-  }
-  .ball {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 999px;
-    width: 45px;
-    height: 45px;
-    background: linear-gradient(
-      110deg,
-      rgba(96, 86, 238, 1) 0%,
-      rgba(135, 123, 255, 1) 100%
-    );
-    border: 3px solid rgba(50, 47, 125, 0.767);
-  }
+const GameStatsStyle = styled.div`
+  margin-bottom: 1rem;
+  .stats-grid { display: grid; grid-template-columns: .9fr .7fr 1.4fr; overflow: hidden; background: var(--bg-panel); border: 1px solid var(--border-subtle); border-radius: 18px; box-shadow: var(--shadow-panel); }
+  .stat-item { position: relative; display: flex; min-height: 84px; flex-direction: column; justify-content: center; padding: .85rem 1.25rem; border-right: 1px solid var(--border-subtle); }
+  .stat-item:last-child { border-right: 0; }
+  .stat-kicker { color: var(--text-muted); font-size: .65rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+  .stat-item strong { margin-top: .35rem; color: var(--text-primary); font-family: "Poppins", sans-serif; font-size: 1.4rem; letter-spacing: .03em; }
+  .stat-item small { margin-top: .25rem; color: var(--text-muted); font-size: .62rem; }
+  .primary-stat { background: linear-gradient(145deg, rgba(124,92,255,.13), rgba(124,92,255,.025)); }
+  .primary-stat > div { display: flex; align-items: baseline; gap: .3rem; }
+  .primary-stat strong { font-size: 2rem; }
+  .primary-stat > div span { color: #8173bc; font-size: .75rem; font-weight: 700; }
+  .recent-balls { display: flex; gap: .42rem; margin-top: .55rem; }
+  .recent-balls span { display: grid; width: 32px; height: 32px; place-items: center; color: var(--text-muted); background: rgba(255,255,255,.025); border: 1px solid var(--border-subtle); border-radius: 9px; font-size: .7rem; font-weight: 700; }
+  .recent-balls span.filled { color: #18130a; background: linear-gradient(145deg, #ffd27d, #f0a438); border-color: transparent; }
+  @media (max-width: 720px) { .stats-grid { grid-template-columns: 1fr 1fr; } .recent-stat { grid-column: span 2; border-top: 1px solid var(--border-subtle); } .stat-item { min-height: 94px; } }
 `;

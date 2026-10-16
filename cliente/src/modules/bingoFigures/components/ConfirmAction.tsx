@@ -4,8 +4,9 @@ import { DeleteFigureService } from "../services/deleteFigure.service";
 import { toast } from "react-toastify";
 import AppIcon from "../../../shared/components/AppIcon";
 
+interface FigureData { id: number; name: string; }
 interface ConfirmActionProps {
-    figureData?: any;
+    figureData: FigureData;
     onClose: () => void;
     onSave: () => void;
 }

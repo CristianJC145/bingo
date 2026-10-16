@@ -1,54 +1,67 @@
-:root{
-    --navbar-height:60px;
+:root {
+  --navbar-height: 76px;
 
+  --color-primary: #7c5cff;
+  --color-primary-600: #6847f2;
+  --color-secondary: #27d3b2;
+  --color-accent: #ffb84d;
+  --color-light: #f7f8fb;
+  --color-danger: #ef5b67;
+  --color-danger-600: #d94755;
+  --color-pastel-red: #ff8290;
+  --color-success: #27d3b2;
+  --color-pastel-green: #61dfc7;
+  --color-gray-300: #99a1b3;
+  --color-gray-400: #727b8f;
+  --color-gray-700: #303747;
+  --color-gray-800: #202633;
+  --color-gray-900: #11151d;
+  --color-blue: #3b82f6;
+  --color-body: #f7f8fb;
 
-    --color-primary: rgb(96, 86, 238);
-    --color-primary-600: rgb(91, 81, 231);
-    --color-secondary: rgb(132, 182, 244);
-    --color-light: rgb(255, 255, 255);
-    --color-danger : rgb(185,28,28);
-    --color-danger-600 : rgb(155, 11, 11);
-    --color-pastel-red: rgb(244, 85, 114);
-    --color-pastel-red-rgb: 244, 85, 114;
-    --color-success : rgb(5, 150, 105);
-    --color-pastel-green: rgb(66 171 73);
-    --color-gray-300: rgb(110, 110, 110);
-    --color-gray-400: rgb(85 85 85);
-    --color-gray-700: rgb(68, 68, 68);
-    --color-gray-800: rgb(35, 44, 65);
-    --color-gray-900 : rgb(13, 19, 36);
-    --color-blue: rgb(0, 69, 154);
-    --color-body: rgb(245 247 250);
-    
-    --color-primary-rgb : 152, 50, 254;
-    --color-danger-rgb: 185, 28, 28;
-    --color-danger-600-rgb: 155,11,11;
-    --color-secondary-rgb: 132, 182, 244;
-    --color-light-rgb : 255, 255, 255;
-    --color-gray-300-rgb : 110, 110, 110;
-    --color-gray-400-rgb: 85, 85, 85;
-    --color-gray-900-rgb : 13, 19, 36;
-    --color-body-rgb: 245, 247, 250;
-    --color-light-rgb: 255, 255, 255;
-    
-    --width-btn-icon: 40px;
-    --height-btn-icon: 40px;
+  --color-primary-rgb: 124, 92, 255;
+  --color-danger-rgb: 239, 91, 103;
+  --color-danger-600-rgb: 217, 71, 85;
+  --color-secondary-rgb: 39, 211, 178;
+  --color-light-rgb: 247, 248, 251;
+  --color-gray-300-rgb: 153, 161, 179;
+  --color-gray-400-rgb: 114, 123, 143;
+  --color-gray-900-rgb: 17, 21, 29;
+  --color-body-rgb: 247, 248, 251;
 
-    --radius-1: 6px;
-    --p-1: 0.25rem;
-    --p-2: 0.5rem;
-    --p-3: 0.75rem;
-    --p-4: 1rem;
-    --p-5: 1.25rem;
-    --p-6: 1.50rem;
-    --p-7: 1.75rem;
-    --p-8: 2rem;
-    --px-1: 0.5rem;
-    --px-2:1rem;
-    --px-3: 1.5rem;
-    --px-4: 2rem;
-    --py-1: 0.5rem;
-    --py-2: 1rem;
-    --py-3: 1.5rem;
-    --py-4: 2rem;
+  --bg-page: #0c0f15;
+  --bg-sidebar: #10141c;
+  --bg-panel: #151a23;
+  --bg-panel-raised: #1a202b;
+  --bg-soft: #202734;
+  --border-subtle: rgba(255, 255, 255, 0.075);
+  --border-strong: rgba(255, 255, 255, 0.14);
+  --text-primary: #f7f8fb;
+  --text-secondary: #99a1b3;
+  --text-muted: #687184;
+  --shadow-panel: 0 20px 55px rgba(0, 0, 0, 0.22);
+  --shadow-float: 0 24px 70px rgba(0, 0, 0, 0.42);
+
+  --width-btn-icon: 40px;
+  --height-btn-icon: 40px;
+  --radius-1: 10px;
+  --radius-md: 16px;
+  --radius-lg: 22px;
+
+  --p-1: 0.25rem;
+  --p-2: 0.5rem;
+  --p-3: 0.75rem;
+  --p-4: 1rem;
+  --p-5: 1.25rem;
+  --p-6: 1.5rem;
+  --p-7: 1.75rem;
+  --p-8: 2rem;
+  --px-1: 0.5rem;
+  --px-2: 1rem;
+  --px-3: 1.5rem;
+  --px-4: 2rem;
+  --py-1: 0.5rem;
+  --py-2: 1rem;
+  --py-3: 1.5rem;
+  --py-4: 2rem;
 }

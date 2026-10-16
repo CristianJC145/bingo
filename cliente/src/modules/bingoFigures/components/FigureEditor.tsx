@@ -1,128 +1,53 @@
-import React, { useState, useEffect } from 'react';
-import styled from 'styled-components';
+import React, { useEffect, useState } from "react";
+import styled from "styled-components";
+import { toast } from "react-toastify";
+import AppButton from "../../../shared/components/Buttons/AppButton";
+import BingoCardVisual from "../../../shared/components/BingoCardVisual";
+import { CreateOrUpdateFigureService } from "../services/createOrUpdateFigure.service";
+import { GetAllFiguresService } from "../services/getAllFigures.service";
 
-import AppButton from '../../../shared/components/Buttons/AppButton';
-import { CreateOrUpdateFigureService } from '../services/createOrUpdateFigure.service';
-import { toast } from 'react-toastify';
-import { GetAllFiguresService } from '../services/getAllFigures.service';
-import AppIcon from '../../../shared/components/AppIcon';
-
+interface Figure { id: number; name: string; pattern: boolean[][]; }
+interface FigureEditorProps { id?: number; onClose: () => void; onSave: () => void; }
 const createOrUpdateFigureService = new CreateOrUpdateFigureService();
-
-interface FigureEditorProps {
-  id?: number;
-  onClose: () => void;
-  onSave: () => void
-}
-
-const getAllFiguresService = new GetAllFiguresService()
+const getAllFiguresService = new GetAllFiguresService();
+const emptyPattern = () => Array.from({ length: 5 }, () => Array(5).fill(false));
 
 const FigureEditor: React.FC<FigureEditorProps> = ({ id, onClose, onSave }) => {
-  const [name, setName] = useState('');
-  const [pattern, setPattern] = useState<boolean[][]>(Array(5).fill(Array(5).fill(false)));
-  const [error, setError] = useState('');
+  const [name, setName] = useState("");
+  const [pattern, setPattern] = useState<boolean[][]>(emptyPattern());
+  const [error, setError] = useState("");
 
-  const fetchFigure = async () => {
-    if (id) {
-      const result = await getAllFiguresService.run();
-      const figure = result.data.find((f: any) => f.id === id);
-      if (figure) {
-        setName(figure.name);
-        setPattern(figure.pattern);
-      }
-    }
-  };
   useEffect(() => {
-    fetchFigure();
+    if (!id) { setName(""); setPattern(emptyPattern()); return; }
+    getAllFiguresService.run().then((result) => {
+      const figure = result.data.find((item: Figure) => item.id === id);
+      if (figure) { setName(figure.name); setPattern(figure.pattern); }
+    });
   }, [id]);
 
-  const handlePatternChange = (rowIndex: number, colIndex: number) => {
-    const newPattern = pattern.map((row, rIdx) =>
-      row.map((cell, cIdx) =>
-        rowIndex === rIdx && colIndex === cIdx ? !cell : cell
-      )
-    );
-    setPattern(newPattern);
+  const handlePatternChange = (rowIndex: number, columnIndex: number) => {
+    if (rowIndex === 2 && columnIndex === 2) return;
+    setPattern((current) => current.map((row, currentRow) => row.map((cell, currentColumn) => currentRow === rowIndex && currentColumn === columnIndex ? !cell : cell)));
   };
 
   const handleSave = async () => {
-    if (!name.trim()) {
-      setError('El nombre es requerido');
-      return;
-    }
-  
-    const dataSend = {
-      data: {
-        name: name,
-        pattern: pattern,
-        ...(id && { id: id }),
-      },
-    };
-  
+    if (!name.trim()) { setError("El nombre es requerido"); return; }
     try {
-      if (id) {
-        await createOrUpdateFigureService.run(dataSend);
-        toast.success('¡Se ha actualizado la figura correctamente!');
-      } else {
-        await createOrUpdateFigureService.run(dataSend);
-        toast.success(`¡Se ha creado la figura ${name} correctamente!`);
-      }
+      await createOrUpdateFigureService.run({ data: { name: name.trim(), pattern, ...(id && { id }) } });
+      toast.success(id ? "Figura actualizada correctamente" : `Figura “${name.trim()}” creada`);
       onSave();
       onClose();
-    } catch (error) {
-      toast.error('Hubo un problema al guardar la figura.');
+    } catch {
+      toast.error("No fue posible guardar la figura.");
     }
   };
-  
 
   return (
     <FigureEditorStyle>
-      <div className="figure-editor">
-        <div className='form-group'>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Nombre de Figura"
-            className={error ? 'form-input mb-2 w-100 error' : 'form-input mb-2 w-100 py-2'}
-            id='figure-name'
-          />
-          {error && <p className="error-message">{error}</p>}
-        </div>
-
-        <div className='side-table'>
-          <div className='pattern-header'>
-            <h5>B</h5>
-            <h5>I</h5>
-            <h5>N</h5>
-            <h5>G</h5>
-            <h5>O</h5>
-          </div>
-          <div className="pattern-grid">
-            {pattern.map((row, rowIndex) => (
-              <div key={rowIndex} className="pattern-row">
-                {row.map((cell, colIndex) => (
-                  <div
-                    key={colIndex}
-                    className={`${rowIndex === 2 && colIndex === 2 ? "free" : cell ?  "cell filled" : "cell"}`}
-                    onClick={() => handlePatternChange(rowIndex, colIndex)}
-                  >
-                    {rowIndex === 2 && colIndex === 2 ? (
-                      <span>FREE</span>
-                    ): cell ? (
-                      <AppIcon icon="star"></AppIcon>
-                    ): ("")}
-                  </div>
-                ))}
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className='figure-action'>
-          <AppButton variant="light" className='bg-transparent' onClick={onClose}>Cancelar</AppButton>
-          <AppButton onClick={handleSave}>Guardar</AppButton>
-        </div>
-      </div>
+      <label className="name-field"><span>Nombre de la figura</span><input type="text" value={name} onChange={(event) => { setName(event.target.value); setError(""); }} placeholder="Ej. Cuatro esquinas" className={`form-input ${error ? "error" : ""}`} />{error && <small>{error}</small>}</label>
+      <div className="editor-label"><div><strong>Diseña el patrón</strong><small>Selecciona todas las casillas necesarias para ganar.</small></div><span>{pattern.flat().filter(Boolean).length} casillas</span></div>
+      <div className="pattern-card"><BingoCardVisual selected={pattern} interactive onCellClick={handlePatternChange} label="Editor de figura" /></div>
+      <div className="editor-actions"><AppButton variant="transparent" label="Cancelar" onClick={onClose} /><AppButton icon="check" label={id ? "Guardar cambios" : "Crear figura"} onClick={handleSave} /></div>
     </FigureEditorStyle>
   );
 };
@@ -130,58 +55,15 @@ const FigureEditor: React.FC<FigureEditorProps> = ({ id, onClose, onSave }) => {
 export default FigureEditor;
 
 const FigureEditorStyle = styled.div`
-  .pattern-grid {
-    display: flex;
-    flex-direction: column;
-    margin-bottom: 1rem;
-  }
-  .pattern-row {
-    display: flex;
-    justify-content: space-between;
-  }
-  .pattern-header {
-    display: flex;
-    justify-content: space-between;
-    margin-top: .5rem;
-    margin-bottom: .5rem;
-    color: var(--color-body);
-  }
-  .pattern-header h5 {
-    width: 60px;
-    text-align: center;
-    font-size: 22px;
-    margin-bottom: 0;
-  }
-
-  .cell {
-    background-color: var(--color-body);
-    color: var(--color-primary);
-    border-radius: 8px;
-    display: inline-block;
-    width: 50px;
-    height: 50px;
-    margin: 0.2rem;
-    cursor: pointer;
-  }
-  .cell.filled {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: var(--color-primary);
-  }
-  .figure-action {
-    display: flex;
-    justify-content: flex-end;
-    border-top: 1px solid rgba(var(--color-gray-300-rgb), .1);
-    padding-top: 1rem;
-    margin-top: 1rem;
-  }
-  .error-message {
-    color: red;
-    font-size: 0.875em;
-  }
-  input.error {
-    border-color: red;
-    box-shadow: 0 0 0 .25rem rgba(253,13,13,.25)
-  }
-`
+  .name-field { display: flex; flex-direction: column; gap: .4rem; }
+  .name-field > span { color: var(--text-muted); font-size: .62rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; }
+  .name-field small { color: var(--color-danger); font-size: .6rem; }
+  .form-input.error { border-color: rgba(var(--color-danger-rgb),.6) !important; }
+  .editor-label { display: flex; align-items: flex-end; justify-content: space-between; margin: 1.25rem 0 .8rem; }
+  .editor-label > div { display: flex; flex-direction: column; }
+  .editor-label strong { font-size: .76rem; font-weight: 600; }
+  .editor-label small { margin-top: .2rem; color: var(--text-muted); font-size: .6rem; }
+  .editor-label > span { color: #b7a8ff; font-size: .6rem; }
+  .pattern-card { display: flex; justify-content: center; }
+  .editor-actions { display: flex; justify-content: flex-end; gap: .5rem; margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--border-subtle); }
+`;

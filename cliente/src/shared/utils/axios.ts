@@ -28,6 +28,13 @@ const configureApi = () => {
       // Manejar errores de respuesta y mostrar mensajes de error
       const response = error.response;
 
+      // Sesión expirada o inválida: se limpia el token y se vuelve al login.
+      if (response?.status === 401 && window.location.pathname !== '/login') {
+        tokenService.delete();
+        window.location.href = '/login';
+        return Promise.reject(error);
+      }
+
       if (response && response.data) {
         const data = response.data;
         // const errorMessage = data.message || 'Error desconocido';

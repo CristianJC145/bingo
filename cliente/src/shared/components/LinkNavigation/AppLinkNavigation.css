@@ -1,28 +1,74 @@
 .vs-link-nav {
-    display: flex;
-    position: relative;
-    align-items: center;
-    color: var(--color-body);
-    background-color: transparent;
-    text-decoration: none;
-    text-wrap: nowrap;
-    padding: var(--p-4);
-    gap: 1rem;
+  position: relative;
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: .6rem;
+  padding: .5rem .6rem;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 0;
+  border-radius: 11px;
+  text-align: left;
+  text-decoration: none !important;
+  transition: color .16s ease, background .16s ease;
 }
-.vs-link-nav.selected {
-    background-color: transparent;
-    color: var(--color-primary);
-    border-radius: 6px;
-    font-weight: 500;
+.vs-link-nav:hover { color: var(--text-primary); background: rgba(255, 255, 255, .04); }
+
+/* Flecha de grupo: marca de jerarquía, no un control. */
+.vs-link-nav .nav-chevron {
+  display: grid;
+  width: 10px;
+  flex: 0 0 10px;
+  place-items: center;
+  color: var(--text-muted);
+  font-size: .58rem;
+  transition: color .16s ease, transform .16s ease;
 }
-.vs-link-nav.selected::before {
-    content: "";
-    width: 0;
-    height: 0;
-    position: absolute;
-    inset: auto -15px auto;
-    width: 4px;
-    height: 45px;
-    border-radius: 10% 3px 3px 10%;
-    background-color: var(--color-primary);
+.vs-link-nav:hover .nav-chevron { color: var(--text-secondary); }
+.vs-link-nav.selected .nav-chevron { color: #a996ff; transform: rotate(90deg); }
+
+/* El icono vive en una caja tenue que se enciende al seleccionar. */
+.vs-link-nav .nav-icon {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  place-items: center;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, .04);
+  border: 1px solid transparent;
+  border-radius: 9px;
+  font-size: .78rem;
+  transition: color .16s ease, background .16s ease, border-color .16s ease;
 }
+.vs-link-nav:hover .nav-icon { color: var(--text-primary); background: rgba(255, 255, 255, .07); }
+
+.vs-link-nav .nav-copy { display: flex; min-width: 0; flex: 1; flex-direction: column; line-height: 1.2; white-space: nowrap; }
+.vs-link-nav .nav-copy strong { overflow: hidden; font-size: .76rem; font-weight: 500; text-overflow: ellipsis; }
+.vs-link-nav .nav-copy small { margin-top: .18rem; color: var(--text-muted); font-size: .6rem; }
+
+.vs-link-nav .nav-badge {
+  display: grid;
+  min-width: 19px;
+  height: 19px;
+  flex: 0 0 auto;
+  place-items: center;
+  padding: 0 .35rem;
+  color: #fff;
+  background: var(--color-primary);
+  border-radius: 99px;
+  font-size: .58rem;
+  font-weight: 700;
+}
+
+.vs-link-nav.selected { color: #fff; background: rgba(124, 92, 255, .12); }
+.vs-link-nav.selected .nav-icon { color: #fff; background: linear-gradient(145deg, #8a6bff, #6544e8); border-color: rgba(255, 255, 255, .12); box-shadow: 0 5px 14px rgba(101, 68, 232, .35); }
+.vs-link-nav.selected .nav-copy strong { font-weight: 600; }
+
+/* Variante sin caja de icono, para la sección de cuenta. */
+.vs-link-nav.is-plain { gap: .75rem; padding: .55rem .65rem; }
+.vs-link-nav.is-plain .nav-icon { width: 17px; height: 17px; flex-basis: 17px; background: transparent; border: 0; font-size: .8rem; box-shadow: none; }
+.vs-link-nav.is-plain:hover .nav-icon { background: transparent; }
+.vs-link-nav.is-plain.selected { background: rgba(255, 255, 255, .05); }
+.vs-link-nav.is-plain.selected .nav-icon { color: #a996ff; background: transparent; box-shadow: none; }

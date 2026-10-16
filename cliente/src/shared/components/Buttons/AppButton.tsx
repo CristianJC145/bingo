@@ -1,258 +1,35 @@
 import React from "react";
-import { ButtonProps } from "./props.button";
-import AppIcon from "../../components/AppIcon";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
+import AppIcon from "../AppIcon";
+import { ButtonProps } from "./props.button";
 
-const AppButton: React.FC<ButtonProps> = ({
-  ariaLabel,
-  label,
-  outlined,
-  href,
-  onClick,
-  variant,
-  target,
-  shadow,
-  icon,
-  to,
-  className,
-  children,
-  subvariant,
-  disabled,
-  id,
-}) => {
-  const baseClassName = "vs-btn";
-  const variantClassName = `vs-btn--${variant ?? "primary"}`;
-  const outlinedClassName = outlined
-    ? `vs-outlined--${variant ?? "primary"}`
-    : "";
-  const shadowClassName = shadow ? `vs-shadow--${shadow}` : "";
-  const iconClassName =
-    (icon && label) || children
-      ? `vs-btn--labelIcon`
-      : icon
-      ? "vs-btn--icon"
-      : "";
-  const classNameCustom = className ? className : "";
-  const classNames = [
-    baseClassName,
-    variantClassName,
-    subvariant,
-    outlinedClassName,
-    shadowClassName,
-    iconClassName,
-    classNameCustom,
-  ]
-    .filter(Boolean)
-    .join(" ");
-
-  if (onClick && to) {
-    return (
-      <AppButtonStyles>
-        <Link to={`${to}`} onClick={onClick} className={classNames}>
-          {icon && <AppIcon icon={icon}></AppIcon>}
-          {label}
-          {children}
-        </Link>
-      </AppButtonStyles>
-    );
-  }
-
-  if (href && onClick) {
-    return (
-      <AppButtonStyles>
-        <a
-          className={classNames}
-          target={target}
-          href={href}
-          onClick={onClick}
-          aria-label={ariaLabel}
-        >
-          {label}
-          {icon && <AppIcon icon={icon}></AppIcon>}
-          {children}
-        </a>
-      </AppButtonStyles>
-    );
-  }
-  if (href) {
-    return (
-      <AppButtonStyles>
-        <a className={classNames} target={target} href={href}>
-          {icon && <AppIcon icon={icon}></AppIcon>}
-          {label}
-          {children}
-        </a>
-      </AppButtonStyles>
-    );
-  }
-
-  if (onClick) {
-    return (
-      <AppButtonStyles>
-        <button
-          type="button"
-          className={classNames}
-          onClick={onClick}
-          aria-label={ariaLabel}
-          disabled={disabled}
-          id={id}
-        >
-          {label}
-          {icon && <AppIcon icon={icon}></AppIcon>}
-          {children}
-        </button>
-      </AppButtonStyles>
-    );
-  }
-
-  if (to) {
-    return (
-      <AppButtonStyles>
-        <Link to={`${to}`} className={classNames}>
-          {icon && <AppIcon icon={icon}></AppIcon>}
-          {label}
-          {children}
-        </Link>
-      </AppButtonStyles>
-    );
-  }
-
-  return (
-    <AppButtonStyles>
-      <button
-        type="submit"
-        className={classNames}
-        aria-label={ariaLabel}
-        disabled={disabled}
-        id={id}
-      >
-        {label}
-        {icon && <AppIcon icon={icon}></AppIcon>}
-        {children}
-      </button>
-    </AppButtonStyles>
-  );
+const AppButton: React.FC<ButtonProps> = ({ ariaLabel, label, outlined, href, onClick, variant, target, shadow, icon, to, className, children, subvariant, disabled, id }) => {
+  const classNames = ["vs-btn", `vs-btn--${variant ?? "primary"}`, outlined ? `vs-outlined--${variant ?? "primary"}` : "", shadow ? `vs-shadow--${shadow}` : "", (icon && label) || children ? "vs-btn--labelIcon" : icon ? "vs-btn--icon" : "", subvariant, className].filter(Boolean).join(" ");
+  const content = <>{label}{icon && <AppIcon icon={icon} />}{children}</>;
+  if (to) return <AppButtonStyles><Link to={to} onClick={onClick} className={classNames}>{content}</Link></AppButtonStyles>;
+  if (href) return <AppButtonStyles><a className={classNames} target={target} href={href} onClick={onClick} aria-label={ariaLabel}>{content}</a></AppButtonStyles>;
+  return <AppButtonStyles><button type={onClick ? "button" : "submit"} className={classNames} onClick={onClick} aria-label={ariaLabel} disabled={disabled} id={id}>{content}</button></AppButtonStyles>;
 };
+
 export default AppButton;
 
 const AppButtonStyles = styled.div`
-  .vs-btn {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    border-color: transparent;
-    border-radius: var(--radius-1);
-    text-decoration: none;
-    padding: var(--p-3) var(--p-7);
-    white-space: nowrap;
-    width: 100%;
-  }
-  .vs-btn--link {
-    display: inline;
-    color: var(--color-primary);
-    padding: 0;
-    border-radius: unset;
-    font-weight: bold;
-    white-space: inherit;
-  }
-
-  .vs-btn--primary.active {
-    background-color: var(--color-primary-600);
-  }
-
-  .vs-btn--primary {
-    color: #ffffff;
-    background: linear-gradient(
-      110deg,
-      rgba(96, 86, 238, 1) 0%,
-      rgba(135, 123, 255, 1) 100%
-    );
-    border: unset;
-    cursor: pointer;
-  }
-
-  .vs-btn--white {
-    color: #ffffff;
-    background-color: #fff;
-  }
-  .vs-btn--dark {
-    color: rgb(77, 77, 77);
-    background-color: rgba(77, 77, 77, 0.282);
-  }
-  .vs-btn--danger {
-    color: #fff;
-    background-color: var(--color-danger);
-  }
-  .vs-btn--icon {
-    width: var(--width-btn-icon);
-    height: var(--height-btn-icon);
-    border-color: transparent;
-    background: transparent;
-    padding: 0;
-    font-size: 16px;
-  }
-  .vs-btn--labelIcon {
-    gap: 0.5rem;
-  }
-  .vs-btn--light {
-    color: var(--color-light);
-    background-color: rgba(var(--color-light-rgb), 0.06);
-  }
-  .vs-btn--light:hover {
-    color: var(--color-light);
-    background-color: rgba(var(--color-light-rgb), 0.15);
-  }
-  .vs-btn--transparent {
-    color: var(--color-gray-900);
-    background-color: transparent;
-  }
-  .vs-btn--primary:hover {
-    background-color: var(--color-primary-600);
-    color: #fff;
-  }
-  .vs-btn--danger:hover {
-    background-color: var(--color-danger-600);
-    color: #fff;
-  }
-  .vs-outlined--primary {
-    border: 1px solid var(--color-primary);
-    background-color: transparent;
-    color: var(--color-primary);
-    text-decoration: none;
-    cursor: pointer;
-  }
-  .vs-outlined--dark {
-    border: 1px solid rgba(var(--color-gray-300-rgb), 0.5);
-    background-color: transparent;
-    color: var(--color-gray-400);
-    cursor: pointer;
-  }
-
-  .vs-outlined--dark:hover {
-    color: var(--color-gray-400);
-    background-color: rgba(var(--color-gray-400-rgb), 0.1);
-  }
-
-  .vs-outlined--primary:hover {
-    color: var(--color-primary);
-    background-color: rgba(var(--color-primary-rgb), 0.1);
-  }
-  .vs-outlined--secondary {
-    border: 1px solid var(--color-secondary);
-    background-color: transparent;
-    color: var(--color-secondary);
-    text-decoration: none;
-    cursor: pointer;
-  }
-  .vs-outlined--light {
-    border: 1px solid var(--color-light);
-    color: var(--color-light);
-    background-color: transparent;
-  }
-
-  .outlined-button:hover {
-    background-color: #000;
-    color: rgba(255, 255, 255, 0.8);
-  }
+  .vs-btn { display: flex; min-height: 42px; align-items: center; justify-content: center; gap: .55rem; padding: .72rem 1.15rem; color: #fff; border: 1px solid transparent; border-radius: 11px; font-size: .78rem; font-weight: 600; line-height: 1; text-decoration: none; white-space: nowrap; cursor: pointer; transition: transform .18s ease, background .18s ease, border-color .18s ease, box-shadow .18s ease, opacity .18s ease; }
+  .vs-btn:hover:not(:disabled) { color: #fff; transform: translateY(-1px); }
+  .vs-btn:focus-visible { outline: 3px solid rgba(var(--color-primary-rgb), .28); outline-offset: 2px; }
+  .vs-btn:disabled { cursor: not-allowed; opacity: .42; }
+  .vs-btn--primary { background: linear-gradient(135deg, #8a6bff, #6847f2); box-shadow: 0 10px 24px rgba(104,71,242,.18); }
+  .vs-btn--primary:hover:not(:disabled) { background: linear-gradient(135deg, #9579ff, #7454f4); box-shadow: 0 12px 30px rgba(104,71,242,.3); }
+  .vs-btn--danger { background: var(--color-danger); }
+  .vs-btn--danger:hover:not(:disabled) { background: var(--color-danger-600); }
+  .vs-btn--light { color: var(--text-primary); background: rgba(255,255,255,.055); border-color: var(--border-subtle); }
+  .vs-btn--light:hover:not(:disabled) { background: rgba(255,255,255,.09); border-color: var(--border-strong); }
+  .vs-btn--white { color: var(--text-secondary); background: transparent; }
+  .vs-btn--transparent, .vs-btn--link { color: var(--text-secondary); background: transparent; }
+  .vs-btn--transparent:hover:not(:disabled), .vs-btn--link:hover:not(:disabled) { color: #fff; background: rgba(255,255,255,.04); }
+  .vs-btn--icon { width: var(--width-btn-icon); min-height: var(--height-btn-icon); padding: 0; }
+  .vs-outlined--primary { color: #a996ff; background: transparent; border-color: rgba(var(--color-primary-rgb), .5); box-shadow: none; }
+  .vs-outlined--light { color: var(--text-primary); background: transparent; border-color: var(--border-strong); }
+  .vs-outlined--transparent { color: var(--text-secondary); border-color: var(--border-subtle); }
 `;

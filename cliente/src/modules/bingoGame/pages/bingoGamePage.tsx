@@ -1,42 +1,38 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import styled from "styled-components";
+import { toast } from "react-toastify";
 import BallPanel from "../components/BallPanel";
 import FigureSelector from "../components/FigureSelector";
 import CartonRangeSelector from "../components/CartonRangeSelector";
-import AppButton from "../../../shared/components/Buttons/AppButton";
-import { CheckWinnerService } from "../services/checkWinner.service";
-
-import { toast } from "react-toastify";
-import styled from "styled-components";
-import { getValidNumbers } from "../logic/getValidNumers";
 import GameStats from "../components/GameStats";
 import WinnerModal from "../components/WinnerModal";
-import AppIcon from "../../../shared/components/AppIcon";
 import ListWinnerModal from "../components/ListWinnersModal";
 import ConfirmFinish from "../components/ConfirmDelete";
+import AppButton from "../../../shared/components/Buttons/AppButton";
+import AppIcon from "../../../shared/components/AppIcon";
 import AppModal from "../../../shared/components/AppModal";
 import configureApi from "../../../shared/utils/axios";
+import { CheckWinnerService } from "../services/checkWinner.service";
+import { GameSessionService } from "../services/gameSession.service";
+import { ALL_CAREGIVER_VALUES, ALL_DISABILITY_VALUES, ALL_MUNICIPALITY_VALUES, getGameSettings } from "../services/gameSettings.service";
+import { getValidNumbers } from "../logic/getValidNumers";
+import { DEFAULT_VOICE, playBallAudio, waitForCurrentBallAudio } from "../logic/ballAudio";
+import { ACTIVE_VOICE_KEY, BallVoice, DEFAULT_VOICE_ID, listBallVoices, REPEAT_VOICE_KEY } from "../../bingoCustomization/services/ballVoices.service";
+import SoundEffectsLauncher from "../components/SoundEffectsLauncher";
+import WinnerRouletteControl from "../components/WinnerRouletteControl";
+import { announceWinnerRoulette, getWinnerRoulette } from "../services/winnerRoulette.service";
 
 const checkWinnerService = new CheckWinnerService();
+const gameSessionService = new GameSessionService();
 
-interface Figure {
-  id: number;
-  name: string;
-  pattern: boolean[][];
-}
-
-interface Card {
-  id: number;
-  pattern: number[][];
-  patternFigure: boolean[][];
-}
+interface Figure { id: number; name: string; pattern: boolean[][]; }
+interface Card { id: number; pattern: number[][]; patternFigure: boolean[][]; }
+interface CartonRange { start?: number; end?: number; specific?: number[]; }
 
 const BingoGamePage: React.FC = () => {
+  const [isHydrated, setIsHydrated] = useState(false);
   const [selectedFigures, setSelectedFigures] = useState<Figure[]>([]);
-  const [cartonRange, setCartonRange] = useState<{
-    start?: number;
-    end?: number;
-    specific?: number[];
-  }>({ start: 0, end: 0, specific: [] });
+  const [cartonRange, setCartonRange] = useState<CartonRange>({ start: 0, end: 0, specific: [] });
   const [isGameStarted, setIsGameStarted] = useState(false);
   const [allReady, setAllReady] = useState(false);
   const [balls, setBalls] = useState<number[]>([]);
@@ -48,87 +44,230 @@ const BingoGamePage: React.FC = () => {
   const [winner, setWinner] = useState<Card[]>([]);
   const [isOpenWinnerModal, setIsOpenWinnerModal] = useState(false);
   const [previousWinners, setPreviousWinners] = useState<Card[]>([]);
+  /** Espejo de los ganadores ya conocidos, para decidir fuera de un actualizador de estado. */
+  const previousWinnersRef = useRef<Card[]>([]);
+  /** Cartones empatados a la espera del sorteo. */
+  const [rouletteCards, setRouletteCards] = useState<Card[]>([]);
+  const [isRouletteOpen, setIsRouletteOpen] = useState(false);
   const [isOpenConfirmModal, setIsOpenConfirmModal] = useState(false);
+  const [startedAt, setStartedAt] = useState<number | null>(null);
+  const [isWinnerOnObs, setIsWinnerOnObs] = useState(false);
+  /** Aviso del filtro configurado: sin él no se entendería por qué un cartón no gana. */
+  const [registeredOnly, setRegisteredOnly] = useState(false);
+  const [activeMunicipalityCount, setActiveMunicipalityCount] = useState(ALL_MUNICIPALITY_VALUES.length);
+  const [activeDisabilityCount, setActiveDisabilityCount] = useState(ALL_DISABILITY_VALUES.length);
+  const [activeCaregiverCount, setActiveCaregiverCount] = useState(ALL_CAREGIVER_VALUES.length);
+  const [automaticBallRepeat, setAutomaticBallRepeat] = useState(false);
+  const [voices, setVoices] = useState<BallVoice[]>([]);
+  const [activeVoiceId] = useState<string>(() => localStorage.getItem(ACTIVE_VOICE_KEY) ?? DEFAULT_VOICE_ID);
+  const [repeatVoiceId] = useState<string>(() => localStorage.getItem(REPEAT_VOICE_KEY) ?? localStorage.getItem(ACTIVE_VOICE_KEY) ?? DEFAULT_VOICE_ID);
 
+  const availableVoices = [DEFAULT_VOICE, ...voices.filter((voice) => voice.ballCount >= 75)];
+  const resolveVoice = (voiceId: string): BallVoice => availableVoices.find((voice) => voice.id === voiceId) ?? DEFAULT_VOICE;
+  const activeVoice = resolveVoice(activeVoiceId);
+  const currentBall = balls.length > 0 ? balls[balls.length - 1] : null;
+
+  /** El estado real de la celebración vive en el servidor, no en esta pantalla. */
+  const syncWinnerOverlay = useCallback(async () => {
+    try {
+      const response = await configureApi().get("http://localhost:3000/api/game/winner-overlay");
+      setIsWinnerOnObs(Boolean(response.data?.data?.visible));
+    } catch { /* Un fallo puntual no debe interrumpir la partida. */ }
+  }, []);
+
+  useEffect(() => {
+    listBallVoices().then((data) => setVoices(data)).catch(() => undefined);
+    syncWinnerOverlay();
+    getGameSettings()
+      .then((settings) => {
+        setRegisteredOnly(settings.registeredCardsOnly);
+        setActiveMunicipalityCount(settings.activeMunicipalities.length);
+        setActiveDisabilityCount(settings.activeDisabilities.length);
+        setActiveCaregiverCount(settings.activeCaregiverStatuses.length);
+        setAutomaticBallRepeat(settings.automaticBallRepeat);
+      })
+      .catch(() => undefined);
+    // Si se recarga el panel con un sorteo pendiente, el mando debe volver a aparecer.
+    getWinnerRoulette()
+      .then((state) => { if (state.active) setIsRouletteOpen(true); })
+      .catch(() => undefined);
+  }, [syncWinnerOverlay]);
+
+  /** Repite la presentación grande de las figuras sobre la transmisión. */
+  const handleShowcaseFigures = async () => {
+    try {
+      await configureApi().post("http://localhost:3000/api/game/showcase-figure", { figures: selectedFigures });
+      toast.success("Figura presentada en la transmisión.");
+    } catch (error) {
+      console.error("Error presentando las figuras:", error);
+      toast.error("No fue posible presentar la figura.");
+    }
+  };
+
+  const handleRepeatBall = () => {
+    if (currentBall === null) return;
+    playBallAudio(currentBall, resolveVoice(repeatVoiceId));
+  };
+
+  /** La celebración se muestra u oculta a voluntad del administrador. */
+  const handleToggleWinnerOnObs = async () => {
+    const nextVisible = !isWinnerOnObs;
+    try {
+      await configureApi().post("http://localhost:3000/api/game/winner-overlay", { visible: nextVisible });
+      setIsWinnerOnObs(nextVisible);
+    } catch (error) {
+      console.error("Error cambiando la visibilidad del ganador:", error);
+      toast.error("No fue posible cambiar la visibilidad del ganador.");
+    }
+  };
+
+  useEffect(() => {
+    gameSessionService.get().then((session) => {
+      setCartonRange(session.cartonRange ?? { start: 0, end: 0, specific: [] });
+      setCardsRangue(Boolean(session.cardsRangue));
+      setSelectedFigures(session.selectedFigures ?? []);
+      setIsGameStarted(Boolean(session.isGameStarted));
+      setGameRandom(session.gameRandom ?? true);
+      setBalls(session.balls ?? []);
+      setDrawnNumbers(session.drawnNumbers ?? []);
+      previousWinnersRef.current = session.previousWinners ?? [];
+      setPreviousWinners(previousWinnersRef.current);
+      setStartedAt(session.startedAt ?? null);
+      if (session.isGameStarted) {
+        toast.info(
+          <div className="app-toast-copy">
+            <strong>Partida reanudada</strong>
+            <span>Se restauró el progreso guardado.</span>
+          </div>,
+          { icon: <AppIcon icon="rotate" /> }
+        );
+      }
+    }).catch(() => undefined).finally(() => setIsHydrated(true));
+    // Solo se ejecuta una vez al montar, para restaurar la sesión guardada.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (!isHydrated) return;
+    const timeoutId = window.setTimeout(() => {
+      gameSessionService.save({
+        cartonRange,
+        cardsRangue,
+        selectedFigures,
+        isGameStarted,
+        gameRandom,
+        balls,
+        drawnNumbers,
+        previousWinners,
+        startedAt,
+      });
+    }, 400);
+    return () => window.clearTimeout(timeoutId);
+  }, [isHydrated, cartonRange, cardsRangue, selectedFigures, isGameStarted, gameRandom, balls, drawnNumbers, previousWinners, startedAt]);
 
   const hasCartonRangeData = useCallback(() => {
     const { start, end, specific } = cartonRange;
-    const isStartEndValid =
-      typeof start === "number" &&
-      start !== 0 &&
-      typeof end === "number" &&
-      end !== 0;
-    const isSpecificValid = Array.isArray(specific) && specific.length > 0;
-
-    return isStartEndValid || isSpecificValid;
+    return (typeof start === "number" && start !== 0 && typeof end === "number" && end !== 0)
+      || (Array.isArray(specific) && specific.length > 0);
   }, [cartonRange]);
 
-  useEffect(() => {
-    if (selectedFigures.length > 0 && hasCartonRangeData()) {
-      setAllReady(true);
+  const checkForWinner = async (selectedBalls: number[]) => {
+    if (!isGameStarted) return;
+    const response = await checkWinnerService.run({ balls: selectedBalls, figures: selectedFigures, range: cartonRange });
+    const { winner: hasWinner, winningCards } = response;
+    if (!hasWinner) return;
+
+    const known = previousWinnersRef.current;
+    const newWinningCards: Card[] = winningCards.filter((card: Card) => !known.some((item) => item.id === card.id));
+    if (newWinningCards.length === 0) return;
+
+    previousWinnersRef.current = [...known, ...newWinningCards];
+    setPreviousWinners(previousWinnersRef.current);
+
+    /*
+     * Con un solo ganador la celebración sigue su curso. Con varios el premio se
+     * sortea: el servidor ya abrió la ruleta, aquí solo se levanta su panel de mando.
+     */
+    if (newWinningCards.length > 1) {
+      setRouletteCards(newWinningCards);
+      setIsRouletteOpen(true);
+      // La escena puede entrar de inmediato, pero su anuncio espera a que la voz
+      // termine de cantar por completo la balota que produjo el empate.
+      void (async () => {
+        await waitForCurrentBallAudio();
+        await new Promise<void>((resolve) => window.setTimeout(resolve, 320));
+        await announceWinnerRoulette().catch(() => undefined);
+      })();
     } else {
-      setAllReady(false);
+      setWinner(newWinningCards);
+      setIsWinner(true);
     }
-  }, [selectedFigures, cartonRange, hasCartonRangeData]);
+    // El servidor decide qué se ve en la transmisión: el botón debe reflejarlo.
+    syncWinnerOverlay();
+  };
+
+  /** La ruleta ya eligió: la celebración continúa con ese único cartón. */
+  const handleRouletteResolved = (cardNumber: number) => {
+    const chosen = rouletteCards.find((card) => card.id === cardNumber);
+    setIsRouletteOpen(false);
+    setRouletteCards([]);
+    if (chosen) { setWinner([chosen]); setIsWinner(true); }
+    syncWinnerOverlay();
+  };
+
+  const handleRouletteCancelled = () => {
+    setIsRouletteOpen(false);
+    setRouletteCards([]);
+    syncWinnerOverlay();
+  };
 
   useEffect(() => {
-    if (gameRandom && drawnNumbers.length > 0) {
-      const updateBallSet = new Set([...balls, ...drawnNumbers]);
-      setBalls(Array.from(updateBallSet));
-      checkForWinner(Array.from(updateBallSet));
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [drawnNumbers]);
+    if (!isHydrated) return;
+    setAllReady(selectedFigures.length > 0 && hasCartonRangeData());
+  }, [isHydrated, selectedFigures, cartonRange, hasCartonRangeData]);
 
-  const handleSelectBall = (balls: number[]) => {
-    setBalls(balls);
-    checkForWinner(balls);
-    setDrawnNumbers(balls);
+  const isFirstDrawnNumbersRender = useRef(true);
+  useEffect(() => {
+    if (!isHydrated) return;
+    if (isFirstDrawnNumbersRender.current) { isFirstDrawnNumbersRender.current = false; return; }
+    if (gameRandom && drawnNumbers.length > 0) {
+      const updatedBalls = Array.from(new Set([...balls, ...drawnNumbers]));
+      setBalls(updatedBalls);
+      checkForWinner(updatedBalls);
+    }
+    // The draw list is cumulative and is the source of truth for random mode.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isHydrated, drawnNumbers]);
+
+  const handleSelectBall = (selectedBalls: number[]) => {
+    setBalls(selectedBalls);
+    checkForWinner(selectedBalls);
+    setDrawnNumbers(selectedBalls);
   };
-  const handleGameRandom = () => {
-    setGameRandom(!gameRandom);
-  };
-  const handleCardsRangue = () => {
-    setCardsRangue(!cardsRangue);
-  };
+
   const handleSelectFigure = async (figures: Figure[]) => {
     try {
-      await configureApi().post(
-        "http://localhost:3000/api/game/update-figure",
-        { figures }
-      );
+      await configureApi().post("http://localhost:3000/api/game/update-figure", { figures });
       setSelectedFigures(figures);
     } catch (error) {
       console.error("Error obteniendo las figuras:", error);
     }
   };
 
-  const handleCloseModal = (type: string) => {
-    if (type === "winner") {
-      setIsWinner(!isWinner);
-    } else if (type === "listWinner") {
-      setIsOpenWinnerModal(!isOpenWinnerModal);
-    } else if (type === "finishGame") {
-      setIsOpenConfirmModal(!isOpenConfirmModal);
-    }
-  };
-  const handleListWinnerModal = () => {
-    setIsOpenWinnerModal(!isOpenWinnerModal);
-  };
-  const handleSelectRange = (range: {
-    start?: number;
-    end?: number;
-    specific?: number[];
-  }) => {
+  const handleSelectRange = (range: CartonRange) => {
     setCartonRange(range);
     setGameReset(false);
   };
+
+  const handleCardsModeChange = (specific: boolean) => {
+    if (specific === cardsRangue) return;
+    setCardsRangue(specific);
+    handleSelectRange({ start: 0, end: 0, specific: [] });
+  };
+
   const handleFinishGame = async () => {
     try {
-      const response = await configureApi().post(
-        "http://localhost:3000/api/game/reset-game"
-      );
-      console.log(response.data.message);
+      await configureApi().post("http://localhost:3000/api/game/reset-game");
     } catch (error) {
       console.error("Error resetting game:", error);
     }
@@ -142,237 +281,138 @@ const BingoGamePage: React.FC = () => {
     setIsGameStarted(false);
     setGameReset(true);
     setWinner([]);
+    previousWinnersRef.current = [];
     setPreviousWinners([]);
+    setStartedAt(null);
+    // `reset-game` apaga la celebración y cierra cualquier sorteo en el servidor.
+    setIsWinnerOnObs(false);
+    setIsRouletteOpen(false);
+    setRouletteCards([]);
   };
+
   const handleStartOrFinishGame = () => {
     if (allReady && !isGameStarted) {
-      setIsGameStarted(!isGameStarted);
-      toast.success("Juego iniciado");
+      setIsGameStarted(true);
+      setStartedAt(Date.now());
+      toast.success(
+        <div className="app-toast-copy">
+          <strong>Partida iniciada</strong>
+          <span>El tablero está activo y el cronómetro comenzó.</span>
+        </div>,
+        { icon: <AppIcon icon="play" /> }
+      );
     } else if (isGameStarted) {
-      setIsOpenConfirmModal(!isOpenConfirmModal);
+      setIsOpenConfirmModal(true);
     }
   };
+
   const drawNumber = () => {
     const validNumbers = getValidNumbers(selectedFigures);
-    
-    // const validNumbers = [30,44,23,55, 17, 57, 51];
-    // const validNumbers = [22, 39, 33, 44, 58, 31, 55];
-
-    if (validNumbers.length === 0) {
-      return;
-    }
-
-    const availableNumbers = validNumbers.filter(
-      (num) => !drawnNumbers.includes(num)
-    );
+    const availableNumbers = validNumbers.filter((number) => !drawnNumbers.includes(number));
     if (availableNumbers.length === 0) {
-      alert("All valid numbers have been drawn.");
+      toast.info("Ya se cantaron todas las balotas disponibles para estas figuras.");
       return;
     }
-
     const randomIndex = Math.floor(Math.random() * availableNumbers.length);
-    const drawnNumber = availableNumbers[randomIndex];
-    setDrawnNumbers([...drawnNumbers, drawnNumber]);
+    setDrawnNumbers([...drawnNumbers, availableNumbers[randomIndex]]);
   };
 
-  const checkForWinner = async (balls: number[]) => {
-    if (!isGameStarted) return;
+  const rangeLabel = cartonRange.specific?.length
+    ? `${cartonRange.specific.length} específicos`
+    : cartonRange.start && cartonRange.end
+      ? `${cartonRange.start} — ${cartonRange.end}`
+      : "Sin definir";
+  const hasValidRange = hasCartonRangeData();
 
-    const data = {
-      balls,
-      figures: selectedFigures,
-      range: cartonRange,
-    };
-
-    const response = await checkWinnerService.run(data);
-    const { winner, winningCards } = response;
-
-    if (winner) {
-      setPreviousWinners((prev) => {
-        // Filtramos solo los nuevos ganadores
-        const newWinningCards = winningCards.filter(
-          (card: { id: number }) =>
-            !prev.some((prevCard) => prevCard.id === card.id)
-        );
-
-        if (newWinningCards.length > 0) {
-          setWinner(newWinningCards);
-          setIsWinner(true);
-        }
-
-        // Retornamos la lista acumulada de ganadores
-        return [...prev, ...newWinningCards];
-      });
-    }
-  };
+  if (!isHydrated) {
+    return (
+      <BingoGamePageStyle>
+        <div className="hydrating-state"><AppIcon icon="rotate" /><span>Restaurando la partida guardada…</span></div>
+      </BingoGamePageStyle>
+    );
+  }
 
   return (
     <BingoGamePageStyle>
-      <GameStats isGameStarted={isGameStarted} balls={balls}></GameStats>
-      <div className="bingo-game">
-        <div className="game-mainSection">
-          <BallPanel
-            gameReset={gameReset}
-            isActivePanel={isGameStarted ? (gameRandom ? true : false) : true}
-            onSelectBall={handleSelectBall}
-            onRandomBall={drawnNumbers}
-          />
-        </div>
-        <div className="d-flex justify-content-between flex-sm-row flex-column">
-          <div className="section balls">
-            <div className="section-header">#Jugados</div>
-            <div className="balls-list">
-              {balls.map((ball, index) => (
-                <span key={index} className="ball-number">
-                  {ball}
+      <GameStats isGameStarted={isGameStarted} balls={balls} startedAt={startedAt} />
+
+      <section className="control-dock">
+          <div className={`dock-card range-card ${isGameStarted ? "is-disabled" : ""}`} aria-disabled={isGameStarted}>
+            <div className="control-header">
+              <div><h2>Cartones</h2><p>{rangeLabel}</p></div>
+              {/* El filtro se avisa en la cabecera para no robar altura a la tarjeta. */}
+              {(registeredOnly || activeMunicipalityCount < ALL_MUNICIPALITY_VALUES.length || activeDisabilityCount < ALL_DISABILITY_VALUES.length || activeCaregiverCount < ALL_CAREGIVER_VALUES.length) && (
+                <span
+                  className="filter-note"
+                  title="Solo compiten cartones que cumplen los filtros configurados en Juego › Configuración"
+                >
+                  <AppIcon icon="list" />
+                  {activeDisabilityCount < ALL_DISABILITY_VALUES.length || activeCaregiverCount < ALL_CAREGIVER_VALUES.length
+                    ? "Filtros activos"
+                    : activeMunicipalityCount < ALL_MUNICIPALITY_VALUES.length
+                      ? `${activeMunicipalityCount} municipios`
+                      : "Solo registrados"}
                 </span>
-              ))}
+              )}
+              <span className={`step-state ${hasValidRange ? "complete" : ""}`}><AppIcon icon={hasValidRange ? "check" : "clone"} /></span>
             </div>
-          </div>
-          <div className="section">
-            <div className="section-header">Cartones en Juego</div>
-            <div className="d-flex justify-content-center mb-4 mt-3 align-items-center gap-4">
-              <div className="d-flex flex-column gap-2 align-items-center">
-                <div className="mt-3">
-                  <span className="section-title">Especificos</span>
-                </div>
-                <div className="d-flex gap-3">
-                  <div className="btn-action-on">
-                    <AppButton
-                      disabled={cardsRangue}
-                      onClick={handleCardsRangue}
-                      className={`${
-                        cardsRangue ? "power-on selected" : "power-on"
-                      }`}
-                      icon="power-off"
-                    ></AppButton>
-                  </div>
-                  <div className="btn-action-off">
-                    <AppButton
-                      disabled={!cardsRangue}
-                      onClick={handleCardsRangue}
-                      className={`${
-                        !cardsRangue ? "power-off selected" : "power-off"
-                      }`}
-                      icon="power-off"
-                    ></AppButton>
-                  </div>
-                </div>
-              </div>
+            <div className="segment-control">
+              <button className={!cardsRangue ? "active" : ""} onClick={() => handleCardsModeChange(false)} disabled={isGameStarted}>Por rango</button>
+              <button className={cardsRangue ? "active" : ""} onClick={() => handleCardsModeChange(true)} disabled={isGameStarted}>Específicos</button>
             </div>
-            <CartonRangeSelector
-              gameReset={gameReset}
-              onCardsRangue={cardsRangue}
-              onSelectRange={handleSelectRange}
-            />
+            <CartonRangeSelector disabled={isGameStarted} gameReset={gameReset} onCardsRangue={cardsRangue} onSelectRange={handleSelectRange} initialRange={cartonRange} />
           </div>
-          <div className="section">
-            <div className="section-header">Juego</div>
-            <div className="section-content">
-              <div
-                className={`${
-                  allReady
-                    ? isGameStarted
-                      ? "btn-game-container rotate"
-                      : "btn-game-container"
-                    : "btn-game-container btn-disabled"
-                }`}
-              >
-                <AppButton
-                  onClick={handleStartOrFinishGame}
-                  disabled={!allReady}
-                  className="btn-game"
-                  icon={!isGameStarted ? "play" : "rotate"}
-                />
-              </div>
 
-              <div className="d-flex flex-column align-items-center gap-2">
-                <div>
-                  <span className="section-title">Balota Aleatoria</span>
-                </div>
-                <div className="d-flex gap-3">
-                  <div className="btn-action-on">
-                    <AppButton
-                      className={`${
-                        gameRandom ? "power-on selected" : "power-on"
-                      }`}
-                      icon="power-off"
-                      onClick={handleGameRandom}
-                      disabled={
-                        isGameStarted ? (gameRandom ? true : false) : true
-                      }
-                    ></AppButton>
-                  </div>
+          <FigureSelector disabled={!hasValidRange || isGameStarted} gameReset={gameReset} onSelectFigure={handleSelectFigure} onShowcase={handleShowcaseFigures} initialSelectedIds={selectedFigures.map((figure) => figure.id)} />
 
-                  <div className="btn-action-off">
-                    <AppButton
-                      className={`${
-                        isGameStarted
-                          ? !gameRandom
-                            ? "power-off selected"
-                            : "power-off"
-                          : "power-off disabled"
-                      }`}
-                      icon="power-off"
-                      onClick={handleGameRandom}
-                      disabled={!gameRandom}
-                    ></AppButton>
-                  </div>
-                </div>
-              </div>
+          <div className={`dock-card session-card ${!allReady ? "is-disabled" : ""} ${isGameStarted ? "is-live" : ""}`} aria-disabled={!allReady}>
+            <div className="control-header"><div><h2>Partida</h2><p>{isGameStarted ? "Partida en curso" : allReady ? "Lista para iniciar" : "Selecciona una figura para continuar"}</p></div><span className={`step-state ${isGameStarted ? "live" : allReady ? "complete" : "locked"}`}><AppIcon icon={isGameStarted ? "play" : allReady ? "check" : "lock"} /></span></div>
+            <div className="mode-row"><div><span>Modo de juego</span><strong>{gameRandom ? "Automático" : "Manual"}</strong><small>{gameRandom ? "El sistema escoge la siguiente balota" : "Marca las balotas directamente en el tablero"}</small></div><button className={`toggle ${gameRandom ? "active" : ""}`} onClick={() => setGameRandom(!gameRandom)} disabled={!isGameStarted} aria-label={`Cambiar a modo ${gameRandom ? "manual" : "automático"}`}><span /></button></div>
+            <div className="session-actions">
+              <AppButton className={`start-button ${isGameStarted ? "finish" : ""}`} variant={isGameStarted ? "light" : "primary"} icon={isGameStarted ? "rotate" : "play"} label={isGameStarted ? "Finalizar" : "Iniciar partida"} onClick={handleStartOrFinishGame} disabled={!allReady} />
+              <AppButton id="btn-game-random" className="draw-button" icon="plus" label="Nueva balota" onClick={drawNumber} disabled={!isGameStarted || !gameRandom} />
+              <AppButton
+                className="repeat-button"
+                variant="light"
+                icon="rotate"
+                label={currentBall !== null ? String(currentBall) : "—"}
+                onClick={handleRepeatBall}
+                disabled={currentBall === null}
+                ariaLabel={currentBall !== null ? `Repetir balota ${currentBall}` : "Repetir balota"}
+              />
             </div>
-            <AppButton
-              className={`${isGameStarted ? (gameRandom ? "mt-3" : "mt-3 disabled") : "mt-3 disabled"}`}
-              disabled={isGameStarted ? (gameRandom ? false : true) : true }
-              onClick={drawNumber}
-              id="btn-game-random"
-              label="Nueva Balota"
-            />
-          </div>
-          <div className="d-flex flex-column gap-3 align-items-center">
-            <FigureSelector
-              gameReset={gameReset}
-              onSelectFigure={handleSelectFigure}
-            />
-            {winner.length > 0 && (
-              <div className="section winner" onClick={handleListWinnerModal}>
-                <div className="section-winner">
-                  <AppIcon className="icon-winners" icon="trophy"></AppIcon>
-                  <span>Lista de ganadores</span>
-                  <div className="badge-winners">
-                    {winner.length > 1
-                      ? `${previousWinners.length} cartones`
-                      : `${previousWinners.length} carton`}
-                  </div>
-                </div>
+            {previousWinners.length > 0 && (
+              <div className="winner-row">
+                <button className="winner-inline" onClick={() => setIsOpenWinnerModal(true)}><AppIcon icon="trophy" /><span>{previousWinners.length} {previousWinners.length === 1 ? "ganador" : "ganadores"}</span><b>Ver →</b></button>
+                <button
+                  type="button"
+                  className={`obs-toggle ${isWinnerOnObs ? "on" : ""}`}
+                  onClick={handleToggleWinnerOnObs}
+                  title={isWinnerOnObs ? "Ocultar la celebración en OBS" : "Mostrar la celebración en OBS"}
+                  aria-label={isWinnerOnObs ? "Ocultar ganador en OBS" : "Mostrar ganador en OBS"}
+                  aria-pressed={isWinnerOnObs}
+                >
+                  <AppIcon icon={isWinnerOnObs ? "ad" : "power-off"} />
+                </button>
               </div>
             )}
+
           </div>
-        </div>
-      </div>
-      <WinnerModal
-        onClose={() => handleCloseModal("winner")}
-        winnerCards={winner}
-        isOpen={isWinner}
-      ></WinnerModal>
-      {isOpenWinnerModal && (
-        <ListWinnerModal
-          isOpen={isOpenWinnerModal}
-          onClose={() => handleCloseModal("listWinner")}
-          winner={previousWinners}
-          drawNumbers={drawnNumbers}
-        ></ListWinnerModal>
-      )}
-      <AppModal
-        title="Terminar Juego"
-        isOpen={isOpenConfirmModal}
-        onClose={() => handleCloseModal("finishGame")}
-      >
-        <ConfirmFinish
-          onClose={() => handleCloseModal("finishGame")}
-          onSave={handleFinishGame}
-        ></ConfirmFinish>
+      </section>
+
+      <section className="ball-board surface-card" aria-label="Tablero de balotas BINGO">
+        <BallPanel gameReset={gameReset} isActivePanel={!isGameStarted || gameRandom} onSelectBall={handleSelectBall} onRandomBall={drawnNumbers} initialBalls={balls} voice={activeVoice} repeatVoice={resolveVoice(repeatVoiceId)} automaticRepeat={automaticBallRepeat} />
+      </section>
+
+      <WinnerModal onClose={() => setIsWinner(false)} winnerCards={winner} isOpen={isWinner} />
+
+      {/* Empate: el sorteo se controla desde aquí y no se puede cerrar por descuido. */}
+      <AppModal title="Sorteo entre ganadores" size="md" isOpen={isRouletteOpen} onClose={() => undefined}>
+        <WinnerRouletteControl onResolved={handleRouletteResolved} onCancelled={handleRouletteCancelled} />
       </AppModal>
+      {isOpenWinnerModal && <ListWinnerModal isOpen={isOpenWinnerModal} onClose={() => setIsOpenWinnerModal(false)} winner={previousWinners} drawNumbers={drawnNumbers} />}
+      <AppModal title="Finalizar partida" isOpen={isOpenConfirmModal} onClose={() => setIsOpenConfirmModal(false)}><ConfirmFinish onClose={() => setIsOpenConfirmModal(false)} onSave={handleFinishGame} /></AppModal>
+      <SoundEffectsLauncher rouletteMode={isRouletteOpen} />
     </BingoGamePageStyle>
   );
 };
@@ -380,220 +420,114 @@ const BingoGamePage: React.FC = () => {
 export default BingoGamePage;
 
 const BingoGamePageStyle = styled.div`
-  .bingo-game {
-    max-width: 1500px;
-    margin: 0 auto;
-    padding: var(--p-6) var(--p-6);
-    border-radius: 12px;
-    background-color: #1e1d49;
-    box-shadow: 1px 1px 3px rgba(255, 255, 255, 0.05),
-      2px 1px 7px 3px rgba(0, 0, 0, 0.05);
-  }
-  .game-mainSection {
-    display: flex;
-    gap: 1rem;
-    margin-bottom: 1rem;
-  }
-  .btn-game-container {
-    position: relative;
-    box-shadow: 0 0 20px rgba(75, 0, 130, 0.5), 0 0 20px rgba(138, 43, 226, 0.5),
-      0 0 30px rgba(138, 43, 226, 0.5);
-    border-radius: 999px;
-    margin-top: 1rem;
-    margin-bottom: 0.5rem;
-  }
-  .btn-game-container::before {
-    content: "";
-    position: absolute;
-    top: -8px;
-    left: -8px;
-    right: -8px;
-    bottom: -8px;
-    border-radius: 50%;
-    background: conic-gradient(
-      from 0deg,
-      #1d1c48 0deg 120deg,
-      #1d1c48 130deg 180deg,
-      transparent 180deg 300deg,
-      transparent 300deg 360deg,
-      transparent 360deg
-    );
-    z-index: 1;
-  }
-  .rotate {
-    animation: rotateBorder 4s linear infinite;
-  }
-  .btn-game-container::after {
-    content: "";
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 140%;
-    height: 140%;
-    border: 8px solid transparent;
-    border-top-color: #f8ad2a;
-    border-bottom-color: #f8ad2a;
-    border-radius: 50%;
-    transform: translate(-50%, -50%) rotate(0deg);
-    box-sizing: border-box;
-    animation: rotate 2s linear infinite;
-    background-color: #2c2a63;
-    z-index: 0;
-  }
-  .btn-game-container.btn-disabled {
-    opacity: 0.5;
-    box-shadow: none;
-  }
-  .btn-game-container.btn-disabled::before {
-    animation: unset;
-  }
-  .btn-game-container.btn-disabled .btn-game {
-    cursor: unset;
-  }
-  .btn-game {
-    position: relative;
-    background-color: var(--color-primary);
-    border-radius: 999px;
-    width: 60px;
-    height: 60px;
-    font-size: 24px;
-    z-index: 2;
-  }
-  .section {
-    padding: 1rem;
-    box-shadow: 1px 3px 6px rgba(0, 0, 0, 0.2);
-    border-radius: 16px;
-    background: linear-gradient(130deg, #2c2a63, #3e3a83);
-    color: var(--color-light);
-    min-width: 220px;
-  }
-  .section-title {
-    font-size: 0.85rem;
-    font-weight: 300;
-  }
-  .section-content {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    margin-top: 1rem;
-    align-items: center;
-    justify-content: center;
-  }
-  .btn-action-on {
-    padding: 0.5rem;
-    border-radius: 99px;
-    background: linear-gradient(
-      0deg,
-      rgba(65, 255, 51, 0.2) 3%,
-      rgba(4, 99, 30, 0.2) 80%,
-      rgba(0, 0, 0, 0) 98%
-    );
-  }
-  .btn-action-off {
-    padding: 0.5rem;
-    border-radius: 99px;
-    background: linear-gradient(
-      0deg,
-      rgba(var(--color-danger-600-rgb), 0.3) 3%,
-      rgba(var(--color-danger-600-rgb), 0.3) 80%,
-      rgba(0, 0, 0, 0) 98%
-    );
-  }
-  .btn-action-off .vs-btn:hover,
-  .btn-action-on .vs-btn:hover {
-    background-color: initial;
-    opacity: 0.7;
-  }
-  .power-on {
-    opacity: 0.5;
-    border-radius: 99px;
-    background: linear-gradient(
-      0deg,
-      rgba(167, 250, 159, 1) 0%,
-      rgba(65, 255, 51, 1) 3%,
-      rgba(4, 99, 30, 1) 60%,
-      rgba(0, 0, 0, 0) 90%
-    );
-  }
-  .power-off {
-    opacity: 0.5;
-    border-radius: 99px;
-    background: linear-gradient(
-      0deg,
-      var(--color-pastel-red),
-      var(--color-danger),
-      var(--color-danger-600) 60%,
-      rgba(0, 0, 0, 0)
-    );
-  }
-  .power-off svg {
-    transform: rotate(180deg);
-  }
-  .balls {
-    max-width: 100px;
-    width: 100%;
-  }
-  .section-header {
-    text-align: center;
-    padding-bottom: 1rem;
-    border-bottom: 2px solid rgba(var(--color-light-rgb), 0.04);
-  }
-  .balls-list {
-    display: grid;
-    grid-template-columns: repeat(10, 1fr);
-    gap: 0.5rem;
-    margin-top: 1rem;
-  }
-  .ball-number {
-    color: #fff;
-    background-color: rgba(0, 0, 0, 0.3);
-    text-align: center;
-  }
-  .selected {
-    opacity: 1;
-  }
-  .selected:hover {
-    opacity: 1 !important;
-    cursor: unset;
-  }
-  .disabled {
-    opacity: 0.5 !important;
-    cursor: unset;
-  }
-  .winner {
-    width: 100%;
-  }
-  .section-winner {
-    display: flex;
-    padding: 0 var(--p-4);
-    justify-content: space-between;
-    align-items: center;
-  }
-  .section.winner:hover {
-    cursor: pointer;
-  }
-  .badge-winners {
-    display: inline-block;
-    padding: var(--p-1) var(--p-6);
-    background-color: #1d1c48;
-    border-radius: 12px;
-    font-size: small;
-    font-weight: 700;
-  }
-  .icon-winners {
-    font-size: 1.125rem;
-  }
-  @media (min-width: 768px) {
-    .balls {
-      max-width: 350px;
-    }
-  }
-  @keyframes rotateBorder {
-    0% {
-      transform: rotate(0deg);
-    }
-    100% {
-      transform: rotate(360deg);
-    }
-  }
+  .hydrating-state { display: flex; min-height: 320px; align-items: center; justify-content: center; flex-direction: column; gap: .8rem; color: var(--text-muted); font-size: .78rem; }
+  .hydrating-state svg { font-size: 1.4rem; animation: spin 1.1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .page-intro { display: flex; align-items: flex-end; justify-content: space-between; gap: 2rem; margin-bottom: 1.5rem; }
+  .game-state { display: flex; min-width: 190px; align-items: center; gap: .75rem; padding: .8rem 1rem; background: var(--bg-panel); border: 1px solid var(--border-subtle); border-radius: 14px; }
+  .game-state > span { width: 9px; height: 9px; background: var(--color-accent); border-radius: 50%; box-shadow: 0 0 0 6px rgba(255,184,77,.08); }
+  .game-state.live > span { background: var(--color-secondary); box-shadow: 0 0 0 6px rgba(var(--color-secondary-rgb),.08); animation: pulse 2s infinite; }
+  .game-state div { display: flex; flex-direction: column; line-height: 1.2; }
+  .game-state small { color: var(--text-muted); font-size: .64rem; text-transform: uppercase; letter-spacing: .08em; }
+  .game-state strong { margin-top: .3rem; font-size: .76rem; font-weight: 600; }
+  .game-workspace { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 1.25rem; align-items: start; }
+  .ball-board { min-width: 0; padding: clamp(1rem, 2vw, 1.5rem); }
+  .panel-heading, .panel-heading > div, .control-header { display: flex; align-items: center; }
+  .panel-heading { justify-content: space-between; gap: 1rem; margin-bottom: 1.5rem; }
+  .panel-heading > div, .control-header { gap: .8rem; }
+  .panel-heading h2, .control-header h2 { margin: 0; color: var(--text-primary); font-size: .92rem; font-weight: 600; }
+  .panel-heading p, .control-header p { margin: .22rem 0 0; color: var(--text-muted); font-size: .68rem; }
+  .panel-index { display: grid; width: 34px; height: 34px; flex: 0 0 34px; place-items: center; color: var(--text-muted); background: rgba(255,255,255,.035); border: 1px solid var(--border-subtle); border-radius: 10px; font-family: "Poppins", sans-serif; font-size: .62rem; font-weight: 700; }
+  .played-strip { display: flex; align-items: center; gap: 1.2rem; margin-top: 1.4rem; padding-top: 1.1rem; border-top: 1px solid var(--border-subtle); }
+  .played-label { display: flex; min-width: 130px; flex-direction: column; }
+  .played-label span { color: var(--text-muted); font-size: .62rem; text-transform: uppercase; letter-spacing: .1em; }
+  .played-label strong { margin-top: .2rem; font-size: .7rem; font-weight: 600; }
+  .played-list { display: flex; min-width: 0; gap: .38rem; overflow-x: auto; padding: .2rem 0; }
+  .history-ball { display: grid; width: 29px; height: 29px; flex: 0 0 29px; place-items: center; color: var(--text-secondary); background: var(--bg-soft); border: 1px solid var(--border-subtle); border-radius: 9px; font-size: .68rem; font-weight: 700; }
+  .empty-history { color: var(--text-muted); font-size: .7rem; }
+  .control-rail { display: flex; flex-direction: column; gap: 1rem; }
+  .control-card { padding: 1.1rem; }
+  .control-header { margin-bottom: 1rem; }
+  .segment-control { display: grid; grid-template-columns: 1fr 1fr; gap: .25rem; margin-bottom: .8rem; padding: .25rem; background: rgba(0,0,0,.22); border-radius: 11px; }
+  .segment-control button { padding: .58rem .5rem; color: var(--text-muted); background: transparent; border: 0; border-radius: 8px; font-size: .68rem; font-weight: 600; cursor: pointer; }
+  .segment-control button.active { color: #fff; background: var(--bg-soft); box-shadow: 0 2px 8px rgba(0,0,0,.16); }
+  .segment-control button:disabled { cursor: not-allowed; opacity: .55; }
+  .mode-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; padding: .85rem 0; border-top: 1px solid var(--border-subtle); border-bottom: 1px solid var(--border-subtle); }
+  .mode-row > div { display: flex; flex-direction: column; }
+  .mode-row span { font-size: .75rem; font-weight: 600; }
+  .mode-row strong { margin-top: .12rem; color: #b5a6ff; font-size: .66rem; font-weight: 700; }
+  .mode-row small { margin-top: .25rem; color: var(--text-muted); font-size: .62rem; }
+  .toggle { position: relative; width: 42px; height: 24px; flex: 0 0 42px; padding: 0; background: #303746; border: 0; border-radius: 99px; cursor: pointer; transition: background .2s ease; }
+  .toggle span { position: absolute; top: 4px; left: 4px; width: 16px; height: 16px; background: #8992a5; border-radius: 50%; transition: transform .2s ease, background .2s ease; }
+  .toggle.active { background: rgba(var(--color-primary-rgb),.35); }
+  .toggle.active span { background: #a996ff; transform: translateX(18px); }
+  .toggle:disabled { cursor: not-allowed; opacity: .45; }
+  .draw-button, .start-button { width: 100%; }
+  .draw-button .vs-btn, .start-button .vs-btn { width: 100%; }
+  .draw-button { margin-bottom: .55rem; }
+  .draw-button .vs-btn { color: #17130b; background: linear-gradient(135deg, #ffd27d, #ffb13f); box-shadow: 0 10px 28px rgba(255,184,77,.12); }
+  .draw-button .vs-btn:hover:not(:disabled) { color: #17130b; background: linear-gradient(135deg, #ffda91, #ffbc56); }
+  .readiness-note { display: flex; align-items: center; justify-content: center; gap: .4rem; margin: .75rem 0 0; color: var(--text-muted); font-size: .62rem; }
+  .winner-summary { display: flex; width: 100%; align-items: center; gap: .75rem; padding: 1rem; color: #fff; text-align: left; background: linear-gradient(125deg, rgba(255,184,77,.16), rgba(124,92,255,.13)), var(--bg-panel); border: 1px solid rgba(255,184,77,.25); border-radius: 16px; cursor: pointer; }
+  .trophy { display: grid; width: 38px; height: 38px; place-items: center; color: var(--color-accent); background: rgba(255,184,77,.1); border-radius: 12px; }
+  .winner-summary > span:nth-child(2) { display: flex; flex: 1; flex-direction: column; }
+  .winner-summary small { color: var(--text-secondary); font-size: .62rem; }
+  .winner-summary strong { margin-top: .2rem; font-size: .78rem; }
+  .winner-summary b { color: var(--color-accent); font-size: .65rem; }
+  @keyframes pulse { 50% { box-shadow: 0 0 0 9px rgba(var(--color-secondary-rgb),0); } }
+  @keyframes live-sweep { 0%, 100% { opacity: .35; transform: translateX(-35%); } 50% { opacity: 1; transform: translateX(35%); } }
+  .control-dock { display: grid; grid-template-columns: .9fr 1.05fr 1.15fr; margin-bottom: 1rem; overflow: hidden; background: linear-gradient(145deg, rgba(255,255,255,.024), transparent 70%), var(--bg-panel); border: 1px solid var(--border-subtle); border-radius: 18px; box-shadow: var(--shadow-panel); }
+  .dock-card { min-width: 0; padding: 1rem 1.15rem; border-right: 1px solid var(--border-subtle); }
+  .control-dock > section { min-width: 0; background: transparent !important; border: 0 !important; border-right: 1px solid var(--border-subtle) !important; border-radius: 0 !important; box-shadow: none !important; }
+  .control-dock > :last-child { border-right: 0 !important; }
+  .control-dock .control-header { margin-bottom: .7rem; }
+  .control-dock .control-header { justify-content: space-between; }
+  .control-dock .is-disabled { opacity: .48; filter: saturate(.72); pointer-events: none; }
+  .control-dock .is-disabled::after { pointer-events: none; }
+  .step-state { display: grid; width: 28px; height: 28px; flex: 0 0 28px; place-items: center; color: var(--text-muted); background: rgba(255,255,255,.035); border: 1px solid var(--border-subtle); border-radius: 9px; font-size: .62rem; }
+  .step-state.complete { color: var(--color-secondary); background: rgba(var(--color-secondary-rgb),.08); border-color: rgba(var(--color-secondary-rgb),.18); }
+  .step-state.locked { color: #596173; background: rgba(0,0,0,.12); }
+  .step-state.live { color: var(--color-accent); background: rgba(255,184,77,.08); border-color: rgba(255,184,77,.2); animation: pulse 2s infinite; }
+  .control-dock .figure-preview { min-height: 70px; margin-bottom: 0; }
+  .control-dock .figure-chips { max-height: 24px; margin: .45rem 0 0; overflow: hidden; }
+  .session-card .control-header { position: relative; padding-right: 1rem; }
+  .session-card { position: relative; overflow: hidden; transition: background .25s ease, box-shadow .25s ease; }
+  .session-card::before { position: absolute; top: 0; right: 0; left: 0; height: 2px; content: ""; background: transparent; transition: background .25s ease; }
+  .session-card.is-live { background: linear-gradient(145deg, rgba(var(--color-secondary-rgb),.075), transparent 52%); box-shadow: inset 0 0 0 1px rgba(var(--color-secondary-rgb),.08); }
+  .session-card.is-live::before { background: linear-gradient(90deg, transparent, var(--color-secondary), transparent); animation: live-sweep 2.8s ease-in-out infinite; }
+  .session-status { position: absolute; right: 0; width: 8px; height: 8px; background: var(--text-muted); border-radius: 50%; box-shadow: 0 0 0 5px rgba(104,113,132,.08); }
+  .session-status.ready { background: var(--color-accent); box-shadow: 0 0 0 5px rgba(255,184,77,.08); }
+  .session-status.live { background: var(--color-secondary); box-shadow: 0 0 0 5px rgba(var(--color-secondary-rgb),.08); animation: pulse 2s infinite; }
+  .session-card .mode-row { margin-bottom: .7rem; padding: .55rem 0; }
+  /* Acción principal ancha, secundaria a la izquierda y repetir compacto: el botón cuadrado
+     de cada fila queda alineado a la derecha, dando ritmo sin ocupar más alto. */
+  .session-actions { display: grid; grid-template-columns: 1fr 1.35fr 46px; gap: .4rem; }
+  .session-actions .draw-button { margin-bottom: 0; }
+  .session-actions .vs-btn { min-height: 38px; padding: .55rem .5rem; font-size: .64rem; }
+  .repeat-button .vs-btn { gap: .3rem; padding: .55rem 0; color: var(--color-accent); background: rgba(255,184,77,.08); border-color: rgba(255,184,77,.22); font-size: .7rem; font-weight: 700; }
+  .repeat-button .vs-btn svg { font-size: .62rem; }
+  .repeat-button .vs-btn:hover:not(:disabled) { color: #17130b; background: linear-gradient(135deg, #ffd27d, #ffb13f); }
+  .ball-board { padding: 1rem 1.2rem; }
+  .ball-board .panel-heading { margin-bottom: .85rem; }
+  .winner-inline { display: flex; width: 100%; align-items: center; gap: .45rem; padding: .48rem .7rem; color: var(--color-accent); background: rgba(255,184,77,.07); border: 1px solid rgba(255,184,77,.18); border-radius: 9px; font-size: .64rem; font-weight: 600; cursor: pointer; transition: background .16s ease, border-color .16s ease; }
+  .winner-inline:hover { background: rgba(255,184,77,.12); border-color: rgba(255,184,77,.3); }
+  .winner-inline > span { flex: 1; text-align: left; }
+  .winner-inline b { color: var(--text-secondary); font-size: .58rem; font-weight: 600; }
+  /* Misma rejilla que la fila de acciones: el toggle cae bajo el botón de repetir. */
+  /* Aviso del filtro: comparte la fila del indicador, sin sumar alto a la tarjeta. */
+  .range-card .control-header { gap: .5rem; }
+  .range-card .control-header > div:first-child { min-width: 0; flex: 1; }
+  .range-card .control-header > div:first-child p { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .filter-note { display: flex; flex: 0 0 auto; align-items: center; gap: .35rem; height: 28px; padding: 0 .55rem; color: var(--color-secondary); background: rgba(var(--color-secondary-rgb),.08); border: 1px solid rgba(var(--color-secondary-rgb),.22); border-radius: 9px; font-size: .58rem; font-weight: 600; white-space: nowrap; }
+  .filter-note svg { font-size: .62rem; }
+
+  .winner-row { display: grid; grid-template-columns: 1fr 46px; gap: .4rem; align-items: stretch; margin-top: .4rem; }
+  .winner-row .winner-inline { margin-top: 0; }
+  /* Apagado cuando la celebración no está al aire; encendido cuando sí. */
+  .obs-toggle { display: grid; place-items: center; padding: 0; color: var(--text-muted); background: rgba(255,255,255,.04); border: 1px solid var(--border-subtle); border-radius: 9px; font-size: .72rem; cursor: pointer; transition: color .16s ease, background .16s ease, border-color .16s ease; }
+  .obs-toggle:hover { color: var(--text-primary); background: rgba(255,255,255,.08); }
+  .obs-toggle.on { color: #ff8e99; background: rgba(var(--color-danger-rgb),.12); border-color: rgba(var(--color-danger-rgb),.35); box-shadow: 0 0 0 3px rgba(var(--color-danger-rgb),.08); }
+  .obs-toggle.on svg { animation: pulse 1.6s infinite; }
+  @media (max-width: 1100px) { .control-dock { grid-template-columns: 1fr 1fr; } .session-card { grid-column: span 2; border-top: 1px solid var(--border-subtle); } .session-actions { max-width: 430px; } }
+  @media (max-width: 680px) { .control-dock { display: flex; flex-direction: column; } .dock-card, .control-dock > section { border-right: 0 !important; border-bottom: 1px solid var(--border-subtle) !important; } .session-card { border-bottom: 0 !important; } .winner-inline { margin-left: 0; } }
 `;

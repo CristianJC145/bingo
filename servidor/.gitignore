@@ -12,6 +12,16 @@ dist
 dist-ssr
 *.local
 
+# Runtime sound-effect library
+data/sound-effects.json
+storage/sounds/
+data/sponsors.json
+storage/sponsors/
+data/print-template.json
+storage/print-templates/
+data/ball-voices.json
+storage/ball-voices/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

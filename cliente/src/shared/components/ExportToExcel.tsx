@@ -10,7 +10,7 @@ interface BingoCard {
 }
 
 const ExportToExcel: React.FC = () => {
-  const [_exporting, setExporting] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   const handleExportToExcel = async () => {
     setExporting(true);
@@ -42,9 +42,7 @@ const ExportToExcel: React.FC = () => {
   };
 
   return (
-    <AppButton onClick={handleExportToExcel}>
-      Export to Excel
-    </AppButton>
+    <AppButton variant="light" icon="clone" label={exporting ? "Preparando archivo…" : "Exportar inventario"} disabled={exporting} onClick={handleExportToExcel} />
   );
 };
 

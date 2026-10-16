@@ -70,6 +70,7 @@ import {
     faRotate,
     faPowerOff,
     faTrophy,
+    faCircle,
 } from '@fortawesome/free-solid-svg-icons';
 
 library.add(
@@ -138,5 +139,6 @@ library.add(
     faPlay,
     faRotate,
     faPowerOff,
-    faTrophy
+    faTrophy,
+    faCircle
     );

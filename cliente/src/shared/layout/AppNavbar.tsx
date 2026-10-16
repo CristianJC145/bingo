@@ -1,230 +1,115 @@
-import React, { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import React from "react";
+import { useLocation } from "react-router-dom";
 import styled from "styled-components";
 import AppButton from "../components/Buttons/AppButton";
 import AppIcon from "../components/AppIcon";
-import LazyImage from "../components/LazyImage";
-import { TokenService } from "../services/token.service";
-// import { useAuth } from "../contexts/AuthContext";
-// import { LogoutUser } from "../services/logout.service";
-import { settings } from "../constant/settings.constants";
-import { pathnamesT } from "../constant/pathnamesT";
+import { useAuth } from "../../modules/auth/context/AuthContext";
+import { useSlotLive } from "../../modules/slotMachine/context/SlotLiveContext";
 
-const tokenService = new TokenService();
+interface AppNavbarProps { toggleSidebar: () => void; }
 
-interface AppNavbarProps {
-  toggleSidebar: () => void;
-}
+const pageMeta = [
+  { match: "/admin/dashboard", eyebrow: "Resumen general", title: "Dashboard" },
+  { match: "/admin/usuarios", eyebrow: "Administración", title: "Usuarios" },
+  { match: "/admin/asignaciones", eyebrow: "Administración", title: "Asignación de cartones" },
+  { match: "/registro", eyebrow: "Registro", title: "Registro de cartones" },
+  { match: "/game", eyebrow: "Operación en vivo", title: "Panel de juego" },
+  { match: "/sorteo", eyebrow: "Dinámica en vivo", title: "Máquina de la suerte" },
+  { match: "/figures", eyebrow: "Configuración", title: "Figuras ganadoras" },
+  { match: "/resources", eyebrow: "Recursos", title: "Generador de cartones" },
+  { match: "/printing", eyebrow: "Recursos", title: "Impresión de cartones" },
+  { match: "/customization", eyebrow: "Preferencias", title: "Personalización" },
+];
+
 const AppNavbar: React.FC<AppNavbarProps> = ({ toggleSidebar }) => {
-  // const navigate = useNavigate();
   const location = useLocation();
-  const appLogo = settings.appLogo;
-  // const logout = new LogoutUser();
-  const pathnames = location.pathname
-    .split("/")
-    .filter((x) => x)
-    .filter((name) => isNaN(parseInt(name)));
-  const [dropdown, setDropdown] = useState(false);
-  // const authContext = useAuth();
-  const dataToken = tokenService.isAuthenticated();
+  const { isAdmin } = useAuth();
+  const { state: slotState, hideWinner, hideMachine } = useSlotLive();
+  const current = pageMeta.find((item) => location.pathname.startsWith(item.match)) ?? pageMeta[0];
 
-  const toggleDropdown = () => {
-    setDropdown(!dropdown);
-  };
-
-  const closeDropdown = () => {
-    setDropdown(false);
-  };
-  // const handleLogout = async () => {
-  //   await logout.run();
-  //   closeDropdown();
-  //   authContext.logout();
-  //   navigate("/");
-  //   window.location.reload();
-  // };
   return (
     <AppNavbarStyle>
-      <nav className="vs-AppNavbar">
-        <div className="vs-left-nav">
-          <AppButton
-            variant="white"
-            icon="bars"
-            className="vs-btn-openSidebar"
-            onClick={toggleSidebar}
-            ariaLabel="Button Open Sidebar"
-          ></AppButton>
-          <div className="vs-nav-breadcrumbs">
-            {pathnames.map((name, index) => {
-              const routeTo = `/${pathnames.slice(0, index + 1).join("/")}`;
-              const isLast = index === pathnames.length - 1;
-              const isActive = isLast && pathnames.length > 1;
-              const nameT = pathnamesT.find(
-                (pathname) => pathname.path === name
-              )
-                ? pathnamesT.find((pathname) => pathname.path === name)?.value
-                : name;
-              if (index >= 1) {
-                return (
-                  <span
-                    key={name}
-                    className={`vs-breadcrumbs-item ${
-                      isActive ? "active" : ""
-                    }`}
-                  >
-                    {isLast ? (
-                      nameT
-                    ) : (
-                      <>
-                        <Link className="vs-item-link" to={routeTo}>
-                          {nameT}
-                        </Link>
-                        <AppIcon icon="angle-right"></AppIcon>
-                      </>
-                    )}
-                  </span>
-                );
-              }
-            })}
+      <header className="app-header">
+        <div className="header-left">
+          <AppButton variant="light" icon="bars" className="menu-trigger" onClick={toggleSidebar} ariaLabel="Abrir menú" />
+          <div className="route-title">
+            <span>{current.eyebrow}</span>
+            <strong>{current.title}</strong>
           </div>
         </div>
-        <div className="vs-right-nav">
-          <AppButton
-            icon="bell"
-            variant="white"
-            ariaLabel="Notifications"
-          ></AppButton>
-          <div className="vs-navbar-profile">
-            <AppButton
-              className="vs-profile-btn"
-              onClick={toggleDropdown}
-              aria-label="Button Profile"
-            >
-              <LazyImage className="vs-profile-img" src={appLogo} alt="" />
-            </AppButton>
-            {dropdown && (
-              <div className="vs-profile-dropdown">
-                <div className="vs-dropdown-header">
-                  <span>{dataToken.name}</span>
-                </div>
-                <AppButton
-                  className="vs-dropdown-link"
-                  variant="link"
-                  to="user/profile"
-                  label="Mi perfil"
-                  onClick={closeDropdown}
-                  ariaLabel="Button Profile"
-                />
-                {/* <AppButton
-                  className="vs-dropdown-link"
-                  variant="link"
-                  href="#"
-                  label="Cerrar Sesion"
-                  onClick={handleLogout}
-                  ariaLabel="Button Sign off"
-                /> */}
+        <div className={`header-right ${isAdmin ? "has-broadcast" : ""}`}>
+          {/* Aviso persistente: la máquina sigue al aire aunque estemos en otro módulo. */}
+          {slotState.active && (
+            <div className="slot-live-alert">
+              <span className="alert-dot" />
+              <div className="alert-copy">
+                <strong>Máquina en vivo</strong>
+                <small>{slotState.result ? `Cartón N° ${slotState.result.cardNumber}` : "En transmisión"}</small>
               </div>
-            )}
-          </div>
+              <div className="alert-actions">
+                {slotState.winnerVisible && (
+                  <button type="button" onClick={hideWinner} title="Ocultar solo el cartón ganador">
+                    <AppIcon icon="trophy" /><span>Ganador</span>
+                  </button>
+                )}
+                <button type="button" className="danger" onClick={hideMachine} title="Ocultar la máquina en OBS">
+                  <AppIcon icon="power-off" /><span>Máquina</span>
+                </button>
+              </div>
+            </div>
+          )}
+          <div className="system-status"><span className="status-dot" /><span><strong>Sistema disponible</strong><small>Servidor local</small></span></div>
+          {isAdmin && <a className="broadcast-link" href="/obs" target="_blank" rel="noreferrer"><span>Vista OBS</span></a>}
         </div>
-      </nav>
+      </header>
     </AppNavbarStyle>
   );
 };
+
 export default AppNavbar;
 
 const AppNavbarStyle = styled.div`
-  .vs-AppNavbar {
+  .app-header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
     display: flex;
+    height: var(--navbar-height);
     align-items: center;
     justify-content: space-between;
-    height: var(--navbar-height);
-    background-color: #15143c;
-    padding: 0 var(--p-4);
+    padding: 0 clamp(1rem, 3vw, 2.5rem);
+    background: rgba(12, 15, 21, .78);
+    border-bottom: 1px solid var(--border-subtle);
+    backdrop-filter: blur(18px);
   }
-  .vs-left-nav {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-  }
-  .vs-nav-breadcrumbs {
-    display: flex;
-    gap: 0.5rem;
-    text-transform: capitalize;
-    color: var(--color-light);
-  }
-  .vs-breadcrumbs-item svg {
-    margin-left: 0.5rem;
-  }
-  .vs-breadcrumbs-item.active {
-    font-weight: bold;
-  }
-  .vs-item-link {
-    text-decoration: none;
-    color: var(--color-gray-300);
-  }
-  .vs-right-nav {
-    display: flex;
-    align-items: center;
-    padding-right: var(--p-5);
-    gap: 1.5rem;
-  }
-  .vs-navbar-profile {
-    position: relative;
-  }
-  .vs-profile-dropdown {
-    position: absolute;
-    z-index: 2;
-    width: 15rem;
-    padding: var(--p-4);
-    border-radius: 10px;
-    background-color: var(--color-light);
-    box-shadow: 0 0 15px rgba(106, 106, 106, 0.6);
-    inset: 0px 0px auto auto;
-    transform: translate(0px, 45px);
-  }
-  .vs-dropdown-header {
-    padding: var(--p-4);
-    font-weight: bold;
-    border-bottom: 1px solid rgba(var(--color-gray-900-rgb), 0.1);
-    letter-spacing: 0.5px;
-    margin-bottom: 0.5rem;
-  }
-  .vs-profile-img {
-    height: 35px;
-    width: 35px;
-    object-fit: cover;
-    border-radius: 999px;
-  }
-  .vs-profile-btn {
-    background: linear-gradient(130deg, #2c2a63, #3e3a83);
-    border: 2px solid rgba(var(--color-gray-400-rgb), 0.075);
-    border-radius: 999px;
-    width: 45px;
-    height: 45px;
-    padding: 0;
-  }
-  .vs-profile-btn:hover {
-    background-color: rgba(var(--color-gray-400-rgb), 0.03);
-    border-color: rgba(var(--color-gray-400-rgb), 0.1);
-  }
-  .vs-dropdown-link {
-    display: flex;
-    padding: var(--p-4);
-    border-radius: 8px;
-    justify-content: start;
-    color: var(--color-gray-800);
-  }
-  @media (min-width: 768px) {
-  }
-  @media (min-width: 992px) {
-    .vs-btn-openSidebar {
-      display: none;
-    }
-  }
-  @media (min-width: 1200px) {
-    .vs-AppNavbar {
-      padding-left: var(--p-8);
-      padding-right: var(--p-8);
-    }
-  }
+  .header-left, .header-right, .system-status, .broadcast-link { display: flex; align-items: center; }
+  .header-left { gap: 1rem; }
+  .menu-trigger .vs-btn { color: var(--text-secondary); border: 1px solid var(--border-subtle); }
+  .route-title { display: flex; flex-direction: column; line-height: 1.25; }
+  .route-title span { color: var(--text-muted); font-size: .64rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+  .route-title strong { margin-top: .2rem; font-family: "Poppins", sans-serif; font-size: .96rem; font-weight: 600; }
+  .header-right { gap: 1rem; }
+  .slot-live-alert { display: flex; align-items: center; gap: .6rem; padding: .42rem .5rem .42rem .7rem; background: linear-gradient(120deg, rgba(255,184,77,.14), rgba(var(--color-danger-rgb),.1)); border: 1px solid rgba(255,184,77,.32); border-radius: 12px; }
+  .alert-dot { width: 8px; height: 8px; flex: 0 0 8px; background: var(--color-danger); border-radius: 50%; box-shadow: 0 0 0 5px rgba(var(--color-danger-rgb),.14); animation: live-pulse 1.5s infinite; }
+  @keyframes live-pulse { 50% { box-shadow: 0 0 0 9px rgba(var(--color-danger-rgb),0); } }
+  .alert-copy { display: flex; flex-direction: column; line-height: 1.15; }
+  .alert-copy strong { color: var(--color-accent); font-size: .7rem; font-weight: 700; white-space: nowrap; }
+  .alert-copy small { margin-top: .12rem; color: var(--text-muted); font-size: .58rem; white-space: nowrap; }
+  .alert-actions { display: flex; gap: .3rem; }
+  .alert-actions button { display: flex; align-items: center; gap: .3rem; padding: .38rem .55rem; color: var(--text-secondary); white-space: nowrap; background: rgba(255,255,255,.06); border: 1px solid var(--border-subtle); border-radius: 9px; font-size: .62rem; font-weight: 600; cursor: pointer; transition: color .16s ease, background .16s ease; }
+  .alert-actions button:hover { color: #fff; background: rgba(255,255,255,.12); }
+  .alert-actions button.danger:hover { color: #ff8e99; background: rgba(var(--color-danger-rgb),.14); border-color: rgba(var(--color-danger-rgb),.35); }
+  .system-status { gap: .7rem; }
+  /* El divisor solo tiene sentido cuando hay algo a la derecha. */
+  .header-right.has-broadcast .system-status { padding-right: 1rem; border-right: 1px solid var(--border-subtle); }
+  .status-dot { width: 8px; height: 8px; background: var(--color-secondary); border-radius: 50%; box-shadow: 0 0 0 5px rgba(var(--color-secondary-rgb), .09); }
+  .system-status > span:last-child { display: flex; flex-direction: column; line-height: 1.2; }
+  .system-status strong { color: var(--text-secondary); font-size: .72rem; font-weight: 600; }
+  .system-status small { margin-top: .2rem; color: var(--text-muted); font-size: .62rem; }
+  .broadcast-link { gap: .55rem; padding: .58rem .8rem; color: var(--text-primary); font-size: .75rem; font-weight: 600; text-decoration: none !important; background: var(--bg-panel); border: 1px solid var(--border-subtle); border-radius: 10px; }
+  .broadcast-link:hover { color: #fff; border-color: var(--border-strong); }
+  .broadcast-link b { color: var(--color-accent); font-size: .9rem; }
+  @media (min-width: 992px) { .menu-trigger { display: none; } }
+  @media (max-width: 1100px) { .alert-copy small { display: none; } .alert-actions button span { display: none; } }
+  @media (max-width: 640px) { .system-status { display: none; } .broadcast-link span { display: none; } .alert-copy { display: none; } }
 `;
